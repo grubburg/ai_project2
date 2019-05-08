@@ -1,3 +1,8 @@
+from electric_sheep.hexagon import *
+from electric_sheep.board import *
+from electric_sheep.randomStrat import Strategy
+import numpy
+
 
 class ExamplePlayer:
     def __init__(self, colour):
@@ -11,7 +16,10 @@ class ExamplePlayer:
         program will play as (Red, Green or Blue). The value will be one of the 
         strings "red", "green", or "blue" correspondingly.
         """
-        # TODO: Set up state representation.
+        self.colour = colour
+        self.board = Board()
+        self.pieces = self.assign_pieces()
+        self.strategy = Strategy()
 
 
     def action(self):
@@ -25,8 +33,8 @@ class ExamplePlayer:
         must be represented based on the above instructions for representing 
         actions.
         """
-        # TODO: Decide what action to take.
-        return ("PASS", None)
+        next_action = self.strategy.get_next_move(self)
+        return next_action
 
 
     def update(self, colour, action):
@@ -47,4 +55,48 @@ class ExamplePlayer:
         (or pass) for the player colour (your method does not need to validate 
         the action/pass against the game rules).
         """
-        # TODO: Update state representation in response to action.
+        if action[0] == "JUMP":
+            #find jumped over piece
+            middle_piece = tuple(numpy.add(action[1][0], action[1][1]) / 2)
+
+            #if capturing piece
+            if self.board.hexagon_dict[middle_piece].occupant != colour:
+                if self.colour == colour:
+                    self.pieces.append(middle_piece)
+                elif self.board.hexagon_dict[middle_piece].occupant == self.colour:
+                    self.pieces.remove(middle_piece)
+
+                self.board.hexagon_dict[middle_piece].occupant = colour
+
+            
+            self.board.hexagon_dict[action[1][0]].occupant = "e"
+            self.board.hexagon_dict[action[1][1]].occupant = colour
+            self.move_pieces(action[1])
+        elif action[0] == "MOVE":
+
+            self.board.hexagon_dict[action[1][0]].occupant = "e"
+            self.board.hexagon_dict[action[1][1]].occupant = colour
+            self.move_pieces(action[1])
+        elif action[0] == "EXIT":
+            self.board.hexagon_dict[action[1]].occupant = "e"
+            self.exit_piece(action[1])
+
+
+        
+
+    def assign_pieces(self):
+        if self.colour == "red":
+            return list(RED_START)
+        elif self.colour == "green":
+            return list(GREEN_START)
+        else:
+            return list(BLUE_START)
+
+    def move_pieces(self, action):
+        if action[0] in self.pieces:
+            self.pieces.remove(action[0])
+            self.pieces.append(action[1])
+    
+    def exit_piece(self, positon):
+        if positon in self.pieces:
+            self.pieces.remove(positon)
