@@ -11,8 +11,9 @@ BLUE_START = ((3, 0), (2, 1), (1, 2), (0, 3))
 class Board:
     def __init__(self):
         self.hexagon_dict = {}
+        self.position_dict = {}
         self.create_hexagons()
-
+        self.create_positions()
 
 
     def create_hexagons(self):
@@ -29,6 +30,18 @@ class Board:
     
             self.hexagon_dict[tuple(qr)] = my_hex
     
+    # create a dictionary of positions for each colour
+    def create_positions(self):
+        red = list(RED_START)
+        green = list(GREEN_START)
+        blue = list(BLUE_START)
+
+        self.position_dict['red'] = red
+        self.position_dict['green'] = green
+        self.position_dict['blue'] = blue
+
+
+
     def is_valid_position(self, positon):
         if tuple(positon) in self.hexagon_dict:
             return True
