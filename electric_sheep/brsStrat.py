@@ -10,20 +10,20 @@ ALL_COLOUR = ["red", "green", "blue"]
 
 INF = 100000000
 
+
 class Strategy:
-    def __init__(self, state):
-        self.state = state
 
+    def __init__(self, board, colour, arrived_by_move):
+        self.positions = board.position_dict
+        self.colour = colour
+        self.arrived_by_move = arrived_by_move
 
-    def get_next_move(self, colour):
+    def get_next_move(self):
         """
         Function to return the next move the player should make.
         Employs 'best reply search' defined in brs()
-        :param current_state:
-        :param colour:
-        :return:
         """
-        moves = self.state.get_successor_states()
+        moves = self.get_successor_states()
 
         best_score = -INF
 
@@ -37,16 +37,6 @@ class Strategy:
         return best_move.arrived_by_move
 
 
-
-
-
-
-class State:
-
-    def __init__(self, board, colour, arrived_by_move):
-        self.positions = board.position_dict
-        self.colour = colour
-        self.arrived_by_move = arrived_by_move
 
     def eval(self):
         return 0

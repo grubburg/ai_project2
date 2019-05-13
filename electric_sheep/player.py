@@ -1,6 +1,6 @@
 from electric_sheep.hexagon import *
 from electric_sheep.board import *
-from electric_sheep.brsStrat import Strategy
+from electric_sheep.brsStrat import Strategy, State
 import numpy
 
 
@@ -19,17 +19,18 @@ class Player:
         self.colour = colour
         self.board = Board()
         self.pieces = self.assign_pieces()
+        self.strategy = Strategy()
 
 
 
     def action(self):
 
-        # create a strategy object based on the current layout of the board
+        # create a state object based on the current layout of the board
         # this
-        strategy = Strategy(self.board)
+        strat = Strategy(self.board, self.colour, None)
 
         # retrieve the next action based on the current state
-        next_action = self.strategy.get_next_move(self, state)
+        next_action = strat.get_next_move()
         return next_action
 
     def update(self, colour, action):
