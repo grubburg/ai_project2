@@ -19,7 +19,7 @@ class Hexagon:
 
 def is_valid_position(positon) ->bool:
     ran = range(-3, +3 + 1)
-    if -positon[0] -positon[1] in ran:
+    if -positon[0] -positon[1] in ran and positon[0] in ran and positon[1] in ran:
         return True
     else:
         return False
