@@ -34,13 +34,13 @@ class Strategy:
         best_move = None
         for move in moves:
             # print(move.arrived_by_move)
-            move_score = move.brs(-INF, INF, 2, True)
+            move_score = move.brs(-INF, INF, 4, True)
             if move_score > best_score:
                 best_move = move
                 best_score = move_score
 
 
-        print("BEST SCORE:", best_score)
+
         return best_move.arrived_by_move
 
 

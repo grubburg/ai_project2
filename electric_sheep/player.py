@@ -37,7 +37,7 @@ class Player:
         return next_action
 
     def update(self, colour, action):
-        print(action)
+        
 
         if action[0] == "JUMP":
             #find jumped over piece
