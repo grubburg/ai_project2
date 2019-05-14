@@ -46,9 +46,18 @@ class Strategy:
 
 
     def eval(self):
+        pieces = self.positions[self.colour]
 
-        
-        return (2*(self.score) + len(self.positions[self.colour]))
+        dist_count = 0
+        for pos in pieces:
+            dist = INF
+            for exit_pos in FINISHING_HEXES[self.colour]:
+                curr_dist = euclidian_distance(pos, exit_pos)
+                if curr_dist < dist:
+                    dist = curr_dist
+            dist_count += dist
+        avg_dist = dist_count/len(pieces)
+        return -avg_dist + len(pieces) + 2*self.score
 
 
 
@@ -160,3 +169,15 @@ class Strategy:
             a = max(a, v)
 
         return a
+
+
+
+
+def cubify(pos):
+    return (pos[0], pos[1], -pos[0]-pos[1])
+
+def euclidian_distance(action, exit_pos):
+    cube_action = cubify(action)
+    cube_exit = cubify(exit_pos)
+    distance = (cube_action[0] - cube_exit[0])**2 + (cube_action[1] - cube_exit[1])**2 + (cube_action[2] - cube_exit[2])**2
+    return distance
