@@ -1,4 +1,5 @@
 from electric_sheep.board import *
+from copy import deepcopy
 import numpy
 
 FINISHING_HEXES = {
@@ -53,22 +54,22 @@ class Strategy:
         if move[0] == "JUMP":
             # find jumped over piece
             middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
-            poslist[colour].remove(move[1][0])
-            poslist[colour].add(move[1][1])
-            if middle_piece not in poslist[colour]:
-                for player in [c for c in ALL_COLOUR if c != colour]
-                    if middle_piece in poslist[player]:
-                        poslist[player].remove(middle_piece)
-                        poslist[colour].add(middle_piece)
+            self.positions[colour].remove(move[1][0])
+            self.positions[colour].add(move[1][1])
+            if middle_piece not in self.positions[colour]:
+                for player in [c for c in ALL_COLOUR if c != colour]:
+                    if middle_piece in self.positions[player]:
+                        self.positions[player].remove(middle_piece)
+                        self.positions[colour].add(middle_piece)
             
 
         elif move[0] == "MOVE":
-            poslist[colour].remove(move[1][0])
-            poslist[colour].add(move[1][1])
+            self.positions[colour].remove(move[1][0])
+            self.positions[colour].add(move[1][1])
 
             
         elif move[0] == "EXIT":
-            poslist[colour].remove(move[1])
+            self.positions[colour].remove(move[1])
 
 
 
@@ -79,9 +80,9 @@ class Strategy:
 
         valid_moves = []
         for piece in self.poslist[colour]:
-            if piece in FINISHING_HEXES[player.colour]:
+            if piece in FINISHING_HEXES[colour]:
                 new_move = ("EXIT", piece)
-                valid_moves.append(new_move)
+                valid_moves.append((new_move, colour))
             for move in MOVE_ACTIONS:
                 #find new positon
                 new_pos = numpy.add(piece, move)
@@ -89,20 +90,20 @@ class Strategy:
                     #make MOVE action
                     if self.board.hexagon_dict[tuple(new_pos)].occupant == "e":
                         new_move = ("MOVE", (piece, tuple(new_pos)))
-                        valid_moves.append(new_move)
+                        valid_moves.append((new_move, colour))
                     else:
                         #make JUMP action
                         new_pos = numpy.add(tuple(new_pos), move)
                         if self.board.is_valid_position(new_pos) and self.board.hexagon_dict[tuple(new_pos)].occupant == "e":
                             new_move = ("JUMP", (piece, tuple(new_pos)))
-                            valid_moves.append(new_move)
+                            valid_moves.append((new_move, colour))
         return valid_moves
 
     def get_successor_states(self):
         state_array = []
-        for move in get_all_moves(self.colour):
-            new_state = Strategy()
-            new_state.make_move(move)
+        for move in self.get_all_moves(self.colour):
+            new_state = Strategy(deepcopy(self.board), self.colour, move)
+            new_state.make_move(move, self.colour)
             state_array.append(new_state)
         return state_array
 
@@ -135,24 +136,16 @@ class Strategy:
             # set the next turn to our turn
             turn = True
 
-        current_state = deepcopy(self.poslist)
+        current_state = deepcopy(self.positions)
         for move in moves:
             # apply a move to the current state
-            self.make_move(move)
+            self.make_move(move[0], move[1])
             #
             v = -self.brs(-a, -b, depth-1, turn)
             # self.unmake_move(move)
-            self.poslist = current_state
+            self.positions = current_state
             if v > b:
                 return v
             a = max(a, v)
 
         return a
-
-
-
-def find_piece_colour(piece)
-
-
-
-
