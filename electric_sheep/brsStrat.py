@@ -20,7 +20,7 @@ class Strategy:
         self.positions = board.position_dict
         self.colour = colour
         self.arrived_by_move = arrived_by_move
-
+        self.score = 0
 
     def get_next_move(self):
         """
@@ -33,7 +33,7 @@ class Strategy:
 
         best_move = None
         for move in moves:
-            move_score = move.brs(-INF, INF, 5, True)
+            move_score = move.brs(-INF, INF, 4, True)
             if move_score > best_score:
                 best_move = move
                 best_score = move_score
@@ -44,32 +44,35 @@ class Strategy:
 
 
     def eval(self):
-        return 
+        return self.score + self.score + len(self.positions[self.colour])
 
 
 
     def make_move(self, move, colour):
-        
-        
+
+
+
         if move[0] == "JUMP":
             # find jumped over piece
             middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
+
             self.positions[colour].remove(move[1][0])
-            self.positions[colour].add(move[1][1])
+            self.positions[colour].append(move[1][1])
             if middle_piece not in self.positions[colour]:
                 for player in [c for c in ALL_COLOUR if c != colour]:
                     if middle_piece in self.positions[player]:
                         self.positions[player].remove(middle_piece)
-                        self.positions[colour].add(middle_piece)
+                        self.positions[colour].append(middle_piece)
             
 
         elif move[0] == "MOVE":
             self.positions[colour].remove(move[1][0])
-            self.positions[colour].add(move[1][1])
+            self.positions[colour].append(move[1][1])
 
             
         elif move[0] == "EXIT":
             self.positions[colour].remove(move[1])
+            self.score += 1
 
 
 
@@ -79,7 +82,7 @@ class Strategy:
     def get_all_moves(self, colour):
 
         valid_moves = []
-        for piece in self.poslist[colour]:
+        for piece in tuple(self.positions[colour]):
             if piece in FINISHING_HEXES[colour]:
                 new_move = ("EXIT", piece)
                 valid_moves.append((new_move, colour))
@@ -102,8 +105,8 @@ class Strategy:
     def get_successor_states(self):
         state_array = []
         for move in self.get_all_moves(self.colour):
-            new_state = Strategy(deepcopy(self.board), self.colour, move)
-            new_state.make_move(move, self.colour)
+            new_state = Strategy(deepcopy(self.board), self.colour, move[0])
+            new_state.make_move(move[0], self.colour)
             state_array.append(new_state)
         return state_array
 
@@ -136,8 +139,10 @@ class Strategy:
             # set the next turn to our turn
             turn = True
 
-        current_state = deepcopy(self.positions)
+
         for move in moves:
+            current_state = deepcopy(self.positions)
+
             # apply a move to the current state
             self.make_move(move[0], move[1])
             #
