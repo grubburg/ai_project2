@@ -37,7 +37,7 @@ class Player:
         return next_action
 
     def update(self, colour, action):
-        
+
 
         if action[0] == "JUMP":
             #find jumped over piece
@@ -76,7 +76,8 @@ class Player:
             self.move_pieces(action[1])
         elif action[0] == "EXIT":
             self.board.hexagon_dict[action[1]].occupant = "e"
-            self.board.position_dict[colour].remove(action[1][0])
+            print("DEBUG", self.board.position_dict[colour])
+            self.board.position_dict[colour].remove(action[1])
             self.exit_piece(action[1])
 
     def assign_pieces(self):
