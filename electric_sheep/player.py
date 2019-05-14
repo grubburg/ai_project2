@@ -31,6 +31,7 @@ class Player:
 
         # retrieve the next action based on the current state
         next_action = strat.get_next_move()
+        
         return next_action
 
     def update(self, colour, action):

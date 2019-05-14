@@ -14,6 +14,7 @@ class Board:
         self.position_dict = {}
         self.create_hexagons()
         self.create_positions()
+        self.score = 0
 
 
     def create_hexagons(self):
