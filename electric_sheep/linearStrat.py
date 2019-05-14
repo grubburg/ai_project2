@@ -66,6 +66,8 @@ class Strategy:
             score += euclidian_distance(action[1][1], exit_pos)
         score = score//4
 
+        if action[0] == "JUMP":
+            score += 5
         #add safety modifier
         for neighbour in player.board.hexagon_dict[action[1][1]].neighbours:
             #if close to other friendlies
