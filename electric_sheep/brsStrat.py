@@ -15,12 +15,12 @@ INF = 100000000
 
 class Strategy:
 
-    def __init__(self, board, colour, arrived_by_move):
+    def __init__(self, board, colour, arrived_by_move, score):
         self.board = board
         self.positions = board.position_dict
         self.colour = colour
         self.arrived_by_move = arrived_by_move
-        self.score = 0
+        self.score = score
 
     def get_next_move(self):
         """
@@ -33,18 +33,22 @@ class Strategy:
 
         best_move = None
         for move in moves:
-            move_score = move.brs(-INF, INF, 4, True)
+            # print(move.arrived_by_move)
+            move_score = move.brs(-INF, INF, 2, True)
             if move_score > best_score:
                 best_move = move
                 best_score = move_score
 
 
+        print("BEST SCORE:", best_score)
         return best_move.arrived_by_move
 
 
 
     def eval(self):
-        return self.score + self.score + len(self.positions[self.colour])
+
+        
+        return (2*(self.score) + len(self.positions[self.colour]))
 
 
 
@@ -84,6 +88,7 @@ class Strategy:
         valid_moves = []
         for piece in tuple(self.positions[colour]):
             if piece in FINISHING_HEXES[colour]:
+                
                 new_move = ("EXIT", piece)
                 valid_moves.append((new_move, colour))
             for move in MOVE_ACTIONS:
@@ -105,7 +110,7 @@ class Strategy:
     def get_successor_states(self):
         state_array = []
         for move in self.get_all_moves(self.colour):
-            new_state = Strategy(deepcopy(self.board), self.colour, move[0])
+            new_state = Strategy(deepcopy(self.board), self.colour, move[0], self.score)
             new_state.make_move(move[0], self.colour)
             state_array.append(new_state)
         return state_array
@@ -142,13 +147,14 @@ class Strategy:
 
         for move in moves:
             current_state = deepcopy(self.positions)
-
+            current_score = self.score
             # apply a move to the current state
             self.make_move(move[0], move[1])
             #
             v = -self.brs(-a, -b, depth-1, turn)
             # self.unmake_move(move)
             self.positions = current_state
+            self.score = current_score
             if v > b:
                 return v
             a = max(a, v)

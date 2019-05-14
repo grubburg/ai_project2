@@ -1,6 +1,6 @@
 from electric_sheep.hexagon import *
 from electric_sheep.board import *
-from electric_sheep.emptyStrat import Strategy
+from electric_sheep.brsStrat import Strategy
 import numpy
 
 ALL_COLOUR = ["red", "green", "blue"]
@@ -29,8 +29,8 @@ class Player:
 
         # create a state object based on the current layout of the board
         # this
-        strat = Strategy(self.board, self.colour, None)
-        print("Getting move:", self.colour)
+        strat = Strategy(self.board, self.colour, None, 0)
+        
         # retrieve the next action based on the current state
         next_action = strat.get_next_move()
         
