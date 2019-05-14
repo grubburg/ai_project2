@@ -1,6 +1,6 @@
 from electric_sheep.hexagon import *
 from electric_sheep.board import *
-from electric_sheep.randomStrat import Strategy
+from electric_sheep.emptyStrat import Strategy
 import numpy
 
 

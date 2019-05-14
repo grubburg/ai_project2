@@ -1,1 +1,1 @@
-from electric_sheep.player import ExamplePlayer as Player
+from linear_player.player import ExamplePlayer as Player
