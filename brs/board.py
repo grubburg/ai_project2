@@ -1,4 +1,4 @@
-from electric_sheep.hexagon import *
+from brs.hexagon import *
 
 
 

@@ -1,6 +1,6 @@
-from electric_sheep.hexagon import *
-from electric_sheep.board import *
-from electric_sheep.emptyStrat import Strategy
+from brs.hexagon import *
+from brs.board import *
+from brs.brsStrat import Strategy
 import numpy
 
 ALL_COLOUR = ["red", "green", "blue"]
@@ -40,17 +40,14 @@ class Player:
         print(action)
 
         if action[0] == "JUMP":
-            #find jumped over piece
-            middle_piece = tuple(numpy.add(action[1][0], action[1][1]) // 2)
+            # find jumped over piece
+            middle_piece = tuple(numpy.add(action[1][0], action[1][1]) / 2)
 
             # if capturing piece
             if self.board.hexagon_dict[middle_piece].occupant != colour:
-
-                #i captured
                 if self.colour == colour:
                     self.pieces.append(middle_piece)
-                    
-                #mine was captured
+
                 elif self.board.hexagon_dict[middle_piece].occupant == self.colour:
                     self.pieces.remove(middle_piece)
 
