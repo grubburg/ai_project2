@@ -34,12 +34,12 @@ class Strategy:
         best_move = None
         for move in moves:
             # print(move.arrived_by_move)
-            move_score = move.brs(-INF, INF, 2, True)
-            if move_score > best_score:
+            move_score = -move.brs(INF, -INF, 3, True)
+            if move_score >= best_score:
                 best_move = move
                 best_score = move_score
 
-
+        print(best_score)
 
         return best_move.arrived_by_move
 
@@ -47,17 +47,12 @@ class Strategy:
 
     def eval(self):
         pieces = self.positions[self.colour]
-
+        num_pieces = len(pieces)+1
         dist_count = 0
         for pos in pieces:
-            dist = INF
-            for exit_pos in FINISHING_HEXES[self.colour]:
-                curr_dist = euclidian_distance(pos, exit_pos)
-                if curr_dist < dist:
-                    dist = curr_dist
-            dist_count += dist
-        avg_dist = dist_count/len(pieces)
-        return -avg_dist + len(pieces) + 2*self.score
+            dist_count += self.board.path_costs[pos]
+        avg_dist = dist_count/num_pieces
+        return -5*avg_dist + 2*num_pieces + 10*self.score
 
 
 
@@ -164,7 +159,7 @@ class Strategy:
             # self.unmake_move(move)
             self.positions = current_state
             self.score = current_score
-            if v > b:
+            if v >= b:
                 return v
             a = max(a, v)
 

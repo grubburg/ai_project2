@@ -19,7 +19,7 @@ class Player:
         strings "red", "green", or "blue" correspondingly.
         """
         self.colour = colour
-        self.board = Board()
+        self.board = Board(self.colour)
         self.pieces = self.assign_pieces()
 
 
@@ -76,7 +76,7 @@ class Player:
             self.move_pieces(action[1])
         elif action[0] == "EXIT":
             self.board.hexagon_dict[action[1]].occupant = "e"
-            print("DEBUG", self.board.position_dict[colour])
+
             self.board.position_dict[colour].remove(action[1])
             self.exit_piece(action[1])
 
