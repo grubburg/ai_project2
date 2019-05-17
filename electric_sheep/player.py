@@ -1,6 +1,6 @@
 from electric_sheep.hexagon import *
 from electric_sheep.board import *
-from electric_sheep.brsStrat import Strategy
+from electric_sheep.brsStrat import Strategy as brsStrat, State
 import numpy
 
 ALL_COLOUR = ["red", "green", "blue"]
@@ -29,7 +29,10 @@ class Player:
 
         # create a state object based on the current layout of the board
         # this
-        strat = Strategy(self.board, self.colour, None, 0)
+
+        current_state = State(self.board.position_dict, self.board.score_dict, None)
+
+        strat = brsStrat(current_state, self.colour)
         
         # retrieve the next action based on the current state
         next_action = strat.get_next_move()
@@ -46,7 +49,7 @@ class Player:
             # if capturing piece
             if self.board.hexagon_dict[middle_piece].occupant != colour:
 
-                #i captured
+                #if captured
                 if self.colour == colour:
                     self.pieces.append(middle_piece)
                     

@@ -16,19 +16,49 @@ INF = 100000000
 
 class State:
 
-    def __init__(self, position_dict, score, arrive_by_move):
+    def __init__(self, position_dict, score_dict, arrive_by_move):
         self.position_dict = position_dict
-        self.score = score
+        self.score_dict = score_dict
         self.arrived_by_move = arrive_by_move
-
 
     def successor_states(self, colour):
 
-        states = []
-        for piece in self.position_dict[colour]:
-            if piece in FINISHING_HEXES[colour]:
+        child_states = []
 
-        return None
+        moves = self.get_all_moves(colour)
+
+        for move in moves:
+            if move[0] == "EXIT":
+                new_position_dict = deepcopy(self.position_dict)
+                new_position_dict[colour].remove(move[1])
+                new_score_dict = deepcopy(self.score_dict)
+                new_score_dict[colour] += 1
+                new_state = State(new_position_dict, new_score_dict, move)
+                child_states.append(new_state)
+
+            if move[0] == "MOVE":
+                new_position_dict = deepcopy(self.position_dict)
+                new_position_dict[colour].remove(move[1][0])
+                new_position_dict[colour].add(move[1][1])
+
+                new_state = State(new_position_dict, self.score_dict, move)
+                child_states.append(new_state)
+
+            if move[0] == "JUMP":
+                new_position_dict = deepcopy(self.position_dict)
+                middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
+
+                new_position_dict[colour].remove(move[1][0])
+                new_position_dict[colour].add(move[1][1])
+
+                for other_colour in [c for c in ALL_COLOUR if c != colour]:
+                    if middle_piece in new_position_dict[other_colour]:
+                        new_position_dict[other_colour].remove(middle_piece)
+                        new_position_dict[colour].add(middle_piece)
+                new_state = State(new_position_dict, self.score_dict, move)
+                child_states.append(new_state)
+
+        return child_states
 
     def get_all_moves(self, colour):
 
@@ -43,18 +73,16 @@ class State:
                 if new_pos in VALID_TILES:
                     # make MOVE action
 
-                    for other_colour in [c for c in ALL_COLOUR if c != colour]:
-                        if new_pos not in self.position_dict[other_colour]:
+                    for c in ALL_COLOUR:
+                        if new_pos not in self.position_dict[c]:
                             new_move = ("MOVE", (piece, tuple(new_pos)))
                             valid_moves.append((new_move, colour))
                         else:
-                            # make JUMP action
                             new_pos = numpy.add(tuple(new_pos), move)
-                            if self.board.is_valid_position(new_pos) and self.board.hexagon_dict[
-
-                                tuple(new_pos)].occupant == "e":
+                            if new_pos not in self.position_dict[c]:
                                 new_move = ("JUMP", (piece, tuple(new_pos)))
                                 valid_moves.append((new_move, colour))
+
         return valid_moves
 
 
@@ -200,6 +228,12 @@ class Strategy:
         return a
 
 
+
+def eval_state(state: State, colour : str) -> float:
+
+    score = state.score_dict[colour]
+
+    friendly_pieces = len(state.position_dict)
 
 
 def cubify(pos):
