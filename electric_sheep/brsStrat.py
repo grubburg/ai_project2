@@ -10,7 +10,52 @@ FINISHING_HEXES = {
 
 ALL_COLOUR = ["red", "green", "blue"]
 
+VALID_TILES = [(q, r) for q in range(-3,4) for r in range(-3,4) if -q - r in range(-3,4)]
+
 INF = 100000000
+
+class State:
+
+    def __init__(self, position_dict, score, arrive_by_move):
+        self.position_dict = position_dict
+        self.score = score
+        self.arrived_by_move = arrive_by_move
+
+
+    def successor_states(self, colour):
+
+        states = []
+        for piece in self.position_dict[colour]:
+            if piece in FINISHING_HEXES[colour]:
+
+        return None
+
+    def get_all_moves(self, colour):
+
+        valid_moves = []
+        for piece in tuple(self.position_dict[colour]):
+            if piece in FINISHING_HEXES[colour]:
+                new_move = ("EXIT", piece)
+                valid_moves.append((new_move, colour))
+            for move in MOVE_ACTIONS:
+                # find new positon
+                new_pos = numpy.add(piece, move)
+                if new_pos in VALID_TILES:
+                    # make MOVE action
+
+                    for other_colour in [c for c in ALL_COLOUR if c != colour]:
+                        if new_pos not in self.position_dict[other_colour]:
+                            new_move = ("MOVE", (piece, tuple(new_pos)))
+                            valid_moves.append((new_move, colour))
+                        else:
+                            # make JUMP action
+                            new_pos = numpy.add(tuple(new_pos), move)
+                            if self.board.is_valid_position(new_pos) and self.board.hexagon_dict[
+
+                                tuple(new_pos)].occupant == "e":
+                                new_move = ("JUMP", (piece, tuple(new_pos)))
+                                valid_moves.append((new_move, colour))
+        return valid_moves
 
 
 class Strategy:
@@ -87,29 +132,7 @@ class Strategy:
     def unmake_move(self, move):
         return 0
 
-    def get_all_moves(self, colour):
 
-        valid_moves = []
-        for piece in tuple(self.positions[colour]):
-            if piece in FINISHING_HEXES[colour]:
-                
-                new_move = ("EXIT", piece)
-                valid_moves.append((new_move, colour))
-            for move in MOVE_ACTIONS:
-                #find new positon
-                new_pos = numpy.add(piece, move)
-                if self.board.is_valid_position(new_pos):
-                    #make MOVE action
-                    if self.board.hexagon_dict[tuple(new_pos)].occupant == "e":
-                        new_move = ("MOVE", (piece, tuple(new_pos)))
-                        valid_moves.append((new_move, colour))
-                    else:
-                        #make JUMP action
-                        new_pos = numpy.add(tuple(new_pos), move)
-                        if self.board.is_valid_position(new_pos) and self.board.hexagon_dict[tuple(new_pos)].occupant == "e":
-                            new_move = ("JUMP", (piece, tuple(new_pos)))
-                            valid_moves.append((new_move, colour))
-        return valid_moves
 
     def get_successor_states(self):
         state_array = []
@@ -136,11 +159,22 @@ class Strategy:
             return self.eval()
 
         if turn:
+
+            v = -INF
             # if it is our turn, find all our moves
+
             moves = self.get_all_moves(self.colour)
+            for move in moves:
+                self.make_move(move[0], move[1])
+                v = self.brs,
             # set the next turn to NOT our turn
             turn = False
         else:
+
+
+
+
+
             # otherwise find all possible opponent moves
             moves = []
             for opponent in [c for c in ALL_COLOUR if c != self.colour]:

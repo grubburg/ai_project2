@@ -27,12 +27,15 @@ class Board:
     def __init__(self, colour):
         self.hexagon_dict = {}
         self.position_dict = {}
+        self.score_dict = {}
         self.create_hexagons()
         self.create_positions()
-        self.score = 0
+        self.create_scores()
+
         self.colour = colour
         self.printable_board = self.create_printable_board()
         self.path_costs = self.shortest_path_costs(self.colour)
+
 
     def create_hexagons(self):
         ran = range(-3, +3+1)
@@ -58,7 +61,10 @@ class Board:
         self.position_dict['green'] = green
         self.position_dict['blue'] = blue
 
-
+    def create_scores(self):
+        self.score_dict['red'] = 0
+        self.score_dict['green'] = 0
+        self.score_dict['blue'] = 0
 
     def is_valid_position(self, positon):
         if tuple(positon) in self.hexagon_dict:

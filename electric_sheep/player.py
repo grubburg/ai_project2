@@ -76,7 +76,7 @@ class Player:
             self.move_pieces(action[1])
         elif action[0] == "EXIT":
             self.board.hexagon_dict[action[1]].occupant = "e"
-
+            self.board.score_dict[colour] += 1
             self.board.position_dict[colour].remove(action[1])
             self.exit_piece(action[1])
 
