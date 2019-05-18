@@ -109,7 +109,7 @@ class Strategy:
         Employs 'best reply search' defined in brs()
         """
         best_score = -INF
-        best_move = None
+        best_move = ("PASS", None)
 
         for child in self.state.successor_states(self.colour):
 
