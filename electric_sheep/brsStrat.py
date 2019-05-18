@@ -95,6 +95,29 @@ class State:
 
         return valid_moves
 
+    def make_move(self, move, colour):
+
+        if move[0] == "JUMP":
+            # find jumped over piece
+            middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
+
+            self.position_dict[colour].remove(move[1][0])
+            self.position_dict[colour].append(move[1][1])
+            if middle_piece not in self.position_dict[colour]:
+                for player in [c for c in ALL_COLOUR if c != colour]:
+                    if middle_piece in self.position_dict[player]:
+                        self.position_dict[player].remove(middle_piece)
+                        self.position_dict[colour].append(middle_piece)
+
+
+        elif move[0] == "MOVE":
+            self.position_dict[colour].remove(move[1][0])
+            self.position_dict[colour].append(move[1][1])
+
+
+        elif move[0] == "EXIT":
+            self.position_dict[colour].remove(move[1])
+            self.score += 1
 
 class Strategy:
 
@@ -113,7 +136,7 @@ class Strategy:
 
         for child in self.state.successor_states(self.colour):
 
-            current_score = self.brs(child, -INF, INF, 2, True)
+            current_score = -self.brs_negamax(child, -INF, INF, 3, True)
 
             if current_score > best_score:
                 best_score = current_score
@@ -156,6 +179,40 @@ class Strategy:
                 if a>b:
                     break
             return v
+
+
+    def brs_negamax(self, state, a, b, depth, turn):
+
+        if depth <= 0:
+            return eval_state(state, self.colour, self.cost_dict)
+
+        if turn:
+            # if it is our turn, find all our moves
+            moves = state.get_all_moves(self.colour)
+            # set the next turn to NOT our turn
+            turn = False
+        else:
+            # otherwise find all possible opponent moves
+            moves = []
+            for opponent in [c for c in ALL_COLOUR if c != self.colour]:
+                moves += state.get_all_moves(opponent)
+            # set the next turn to our turn
+            turn = True
+
+        for move in moves:
+            current_positions = deepcopy(state.position_dict)
+
+            # apply a move to the current state
+            state.make_move(move[0], move[1])
+            #
+            v = -self.brs_negamax(state, -b, -a, depth - 1, turn)
+            # self.unmake_move(move)
+            state.position_dict = current_positions
+            if v > b:
+                return v
+            a = max(a, v)
+
+        return a
 
 
 
