@@ -70,7 +70,7 @@ class State:
                 new_move = ("EXIT", piece)
                 valid_moves.append(new_move)
             for move in MOVE_ACTIONS:
-                # find new positon
+                # find new position
                 new_pos = tuple(numpy.add(piece, move))
 
                 if new_pos in VALID_TILES:
@@ -117,7 +117,7 @@ class State:
 
         elif move[0] == "EXIT":
             self.position_dict[colour].remove(move[1])
-            self.score += 1
+            self.score_dict[colour] += 1
 
 class Strategy:
 
@@ -136,7 +136,7 @@ class Strategy:
 
         for child in self.state.successor_states(self.colour):
 
-            current_score = -self.brs_negamax(child, -INF, INF, 3, True)
+            current_score = self.brs(child, -INF, INF, 2, True)
 
             if current_score > best_score:
                 best_score = current_score
