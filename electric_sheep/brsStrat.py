@@ -86,7 +86,7 @@ class State:
 
                     else:
                         new_pos = tuple(numpy.add(tuple(new_pos), move))
-                        if new_pos not in all_pieces:
+                        if new_pos not in all_pieces and new_pos in VALID_TILES:
                             new_move = ("JUMP", (piece, tuple(new_pos)))
                             valid_moves.append((new_move))
 
@@ -96,9 +96,10 @@ class State:
 
 class Strategy:
 
-    def __init__(self, state, colour):
+    def __init__(self, state, colour, cost_dict):
         self.state = state
         self.colour = colour
+        self.cost_dict = cost_dict
 
     def get_next_move(self):
         """
@@ -110,7 +111,7 @@ class Strategy:
 
         for child in self.state.successor_states(self.colour):
 
-            current_score = self.brs(child, -INF, INF, 3, True)
+            current_score = self.brs(child, -INF, INF, 2, True)
 
             if current_score > best_score:
                 best_score = current_score
@@ -122,7 +123,7 @@ class Strategy:
 
         # note: need to include condition for terminal node.
         if depth <= 0:
-            return eval_state(state, self.colour)
+            return eval_state(state, self.colour, self.cost_dict)
 
         if turn:
             v = -INF
@@ -147,17 +148,26 @@ class Strategy:
 
 
 
-def eval_state(state: State, colour : str) -> float:
+def eval_state(state: State, colour : str, cost_dict) -> float:
 
     score = state.score_dict[colour]
 
-    num_friendly_pieces = len(state.position_dict)
+    num_friendly_pieces = len(state.position_dict[colour])
     hostile_pieces = []
     for other_colour in [c for c in ALL_COLOUR if c != colour]:
         hostile_pieces += state.position_dict[other_colour]
     num_hostile_pieces = len(hostile_pieces)
 
-    return score + num_friendly_pieces - num_hostile_pieces
+    total_dist = 0
+
+    for piece in state.position_dict[colour]:
+
+        total_dist += cost_dict[piece]
+    avg_dist = total_dist/(1+num_friendly_pieces)
+
+
+
+    return -avg_dist + 10*score - num_hostile_pieces
 
 
 
