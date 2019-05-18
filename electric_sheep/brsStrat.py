@@ -123,8 +123,8 @@ class Strategy:
             return (best_move[0], (int(best_move[1][0]), int(best_move[1][1])))
 
         elif best_move[0] == "JUMP" or best_move[0] == "MOVE":
-            return best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
-                                  (int(best_move[1][1][0]), best_move[1][1][1]))
+            return (best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
+                                  (int(best_move[1][1][0]), int(best_move[1][1][1]))))
         else:
             return ("PASS", None)
 
