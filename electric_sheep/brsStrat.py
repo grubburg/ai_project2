@@ -91,6 +91,8 @@ class State:
                             valid_moves.append((new_move))
 
 
+
+
         return valid_moves
 
 
@@ -116,7 +118,16 @@ class Strategy:
             if current_score > best_score:
                 best_score = current_score
                 best_move = child.arrived_by_move
-        return best_move
+
+        if best_move[0] == "EXIT":
+            return (best_move[0], (int(best_move[1][0]), int(best_move[1][1])))
+
+        elif best_move[0] == "JUMP" or best_move[0] == "MOVE":
+            return best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
+                                  (int(best_move[1][1][0]), best_move[1][1][1]))
+        else:
+            return ("PASS", None)
+
 
     def brs(self, state, a, b, depth, turn):
 
