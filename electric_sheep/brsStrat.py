@@ -27,6 +27,7 @@ class State:
 
         moves = self.get_all_moves(colour)
 
+
         for move in moves:
             if move[0] == "EXIT":
                 new_position_dict = deepcopy(self.position_dict)
@@ -37,9 +38,10 @@ class State:
                 child_states.append(new_state)
 
             if move[0] == "MOVE":
+
                 new_position_dict = deepcopy(self.position_dict)
                 new_position_dict[colour].remove(move[1][0])
-                new_position_dict[colour].add(move[1][1])
+                new_position_dict[colour].append(move[1][1])
 
                 new_state = State(new_position_dict, self.score_dict, move)
                 child_states.append(new_state)
@@ -49,12 +51,12 @@ class State:
                 middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
 
                 new_position_dict[colour].remove(move[1][0])
-                new_position_dict[colour].add(move[1][1])
+                new_position_dict[colour].append(move[1][1])
 
                 for other_colour in [c for c in ALL_COLOUR if c != colour]:
                     if middle_piece in new_position_dict[other_colour]:
                         new_position_dict[other_colour].remove(middle_piece)
-                        new_position_dict[colour].add(middle_piece)
+                        new_position_dict[colour].append(middle_piece)
                 new_state = State(new_position_dict, self.score_dict, move)
                 child_states.append(new_state)
 
@@ -66,166 +68,82 @@ class State:
         for piece in tuple(self.position_dict[colour]):
             if piece in FINISHING_HEXES[colour]:
                 new_move = ("EXIT", piece)
-                valid_moves.append((new_move, colour))
+                valid_moves.append(new_move)
             for move in MOVE_ACTIONS:
                 # find new positon
-                new_pos = numpy.add(piece, move)
+                new_pos = tuple(numpy.add(piece, move))
+
                 if new_pos in VALID_TILES:
                     # make MOVE action
 
+                    all_pieces = []
                     for c in ALL_COLOUR:
-                        if new_pos not in self.position_dict[c]:
-                            new_move = ("MOVE", (piece, tuple(new_pos)))
-                            valid_moves.append((new_move, colour))
-                        else:
-                            new_pos = numpy.add(tuple(new_pos), move)
-                            if new_pos not in self.position_dict[c]:
-                                new_move = ("JUMP", (piece, tuple(new_pos)))
-                                valid_moves.append((new_move, colour))
+                        all_pieces += self.position_dict[c]
+
+                    if new_pos not in all_pieces:
+                        new_move = ("MOVE", (piece, tuple(new_pos)))
+                        valid_moves.append(new_move)
+
+                    else:
+                        new_pos = tuple(numpy.add(tuple(new_pos), move))
+                        if new_pos not in all_pieces:
+                            new_move = ("JUMP", (piece, tuple(new_pos)))
+                            valid_moves.append((new_move))
+
 
         return valid_moves
 
 
 class Strategy:
 
-    def __init__(self, board, colour, arrived_by_move, score):
-        self.board = board
-        self.positions = board.position_dict
+    def __init__(self, state, colour):
+        self.state = state
         self.colour = colour
-        self.arrived_by_move = arrived_by_move
-        self.score = score
 
     def get_next_move(self):
         """
         Function to return the next move the player should make.
         Employs 'best reply search' defined in brs()
         """
-        moves = self.get_successor_states()
-
         best_score = -INF
-
         best_move = None
-        for move in moves:
-            # print(move.arrived_by_move)
-            move_score = -move.brs(INF, -INF, 3, True)
-            if move_score >= best_score:
-                best_move = move
-                best_score = move_score
 
-        print(best_score)
+        for child in self.state.successor_states(self.colour):
 
-        return best_move.arrived_by_move
+            current_score = self.brs(child, -INF, INF, 3, True)
 
+            if current_score > best_score:
+                best_score = current_score
+                best_move = child.arrived_by_move
+        return best_move
 
-
-    def eval(self):
-        pieces = self.positions[self.colour]
-        num_pieces = len(pieces)+1
-        dist_count = 0
-        for pos in pieces:
-            dist_count += self.board.path_costs[pos]
-        avg_dist = dist_count/num_pieces
-        return -5*avg_dist + 2*num_pieces + 10*self.score
+    def brs(self, state, a, b, depth, turn):
 
 
-
-    def make_move(self, move, colour):
-
-
-
-        if move[0] == "JUMP":
-            # find jumped over piece
-            middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
-
-            self.positions[colour].remove(move[1][0])
-            self.positions[colour].append(move[1][1])
-            if middle_piece not in self.positions[colour]:
-                for player in [c for c in ALL_COLOUR if c != colour]:
-                    if middle_piece in self.positions[player]:
-                        self.positions[player].remove(middle_piece)
-                        self.positions[colour].append(middle_piece)
-            
-
-        elif move[0] == "MOVE":
-            self.positions[colour].remove(move[1][0])
-            self.positions[colour].append(move[1][1])
-
-            
-        elif move[0] == "EXIT":
-            self.positions[colour].remove(move[1])
-            self.score += 1
-
-
-
-    def unmake_move(self, move):
-        return 0
-
-
-
-    def get_successor_states(self):
-        state_array = []
-        for move in self.get_all_moves(self.colour):
-            new_state = Strategy(deepcopy(self.board), self.colour, move[0], self.score)
-            new_state.make_move(move[0], self.colour)
-            state_array.append(new_state)
-        return state_array
-
-
-
-    def brs(self, a, b, depth, turn):
-        """
-        Implementation of 'best reply search, where only
-        a single move made by the most threatening enemy is
-        considered in an a-b search through the search space.
-
-        We specify a b, initially -inf +inf respectively, search
-        depth d, and whether or not it is our turn. brs is then
-        called recursively.
-        """
+        # note: need to include condition for terminal node.
         if depth <= 0:
-            # if we reach the specified depth, return the value of the board at this point
-            return self.eval()
+            return eval_state(state, self.colour)
 
         if turn:
-
             v = -INF
-            # if it is our turn, find all our moves
+            for child in state.successor_states(self.colour):
+                v = max(v, self.brs(child, a,b, depth-1, False))
+                a = max(a, v)
+                if a>b:
+                    break
+            return v
 
-            moves = self.get_all_moves(self.colour)
-            for move in moves:
-                self.make_move(move[0], move[1])
-                v = self.brs,
-            # set the next turn to NOT our turn
-            turn = False
         else:
-
-
-
-
-
-            # otherwise find all possible opponent moves
-            moves = []
-            for opponent in [c for c in ALL_COLOUR if c != self.colour]:
-                moves += self.get_all_moves(opponent)
-            # set the next turn to our turn
-            turn = True
-
-
-        for move in moves:
-            current_state = deepcopy(self.positions)
-            current_score = self.score
-            # apply a move to the current state
-            self.make_move(move[0], move[1])
-            #
-            v = -self.brs(-a, -b, depth-1, turn)
-            # self.unmake_move(move)
-            self.positions = current_state
-            self.score = current_score
-            if v >= b:
-                return v
-            a = max(a, v)
-
-        return a
+            v = INF
+            child_states = []
+            for other_colour in [c for c in ALL_COLOUR if c != self.colour]:
+                child_states += state.successor_states(other_colour)
+            for child in child_states:
+                v = min(v, self.brs(child, a, b, depth-1, True))
+                b = min(b, v)
+                if a>b:
+                    break
+            return v
 
 
 
@@ -233,11 +151,19 @@ def eval_state(state: State, colour : str) -> float:
 
     score = state.score_dict[colour]
 
-    friendly_pieces = len(state.position_dict)
+    num_friendly_pieces = len(state.position_dict)
+    hostile_pieces = []
+    for other_colour in [c for c in ALL_COLOUR if c != colour]:
+        hostile_pieces += state.position_dict[other_colour]
+    num_hostile_pieces = len(hostile_pieces)
+
+    return score + num_friendly_pieces - num_hostile_pieces
+
 
 
 def cubify(pos):
     return (pos[0], pos[1], -pos[0]-pos[1])
+
 
 def euclidian_distance(action, exit_pos):
     cube_action = cubify(action)
