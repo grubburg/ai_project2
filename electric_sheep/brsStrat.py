@@ -28,7 +28,7 @@ class State:
         self.score_dict = score_dict
         self.arrived_by_move = arrive_by_move
         self.path_costs = path_costs
-        self.colour = colour_passed
+        self.colour_passed = colour_passed
         self.value = 0
         self.value = self.simple_eval(colour_passed)
 
@@ -73,7 +73,7 @@ class State:
                 # update score information
                 new_score_dict = deepcopy(self.score_dict)
                 new_score_dict[colour] += 1
-                new_state = State(new_position_dict, new_score_dict, move, self.path_costs, self.colour)
+                new_state = State(new_position_dict, new_score_dict, move, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
             if move[0] == "MOVE":
@@ -82,7 +82,7 @@ class State:
                 new_position_dict[colour].remove(move[1][0])
                 new_position_dict[colour].append(move[1][1])
 
-                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour)
+                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
             if move[0] == "JUMP":
@@ -96,9 +96,11 @@ class State:
                     if middle_piece in new_position_dict[other_colour]:
                         new_position_dict[other_colour].remove(middle_piece)
                         new_position_dict[colour].append(middle_piece)
-                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour)
+                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
+            if move[0] == "PASS":
+                child_states.append(self)
         return child_states
 
     def get_all_moves(self, colour):
