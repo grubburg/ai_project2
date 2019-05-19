@@ -155,7 +155,7 @@ class Strategy:
 
         for child in self.state.successor_states(self.colour):
 
-            current_score = self.brs(child, -INF, INF, 2, True)
+            current_score = self.brs(child, -INF, INF, 2, False)
 
             if current_score > best_score:
                 best_score = current_score
@@ -195,7 +195,7 @@ class Strategy:
 
                 v = max(v, self.brs(child, a, b, depth-1, False))
                 a = max(a, v)
-                if a > b:
+                if a >= b:
                     break
             return v
 
@@ -207,7 +207,7 @@ class Strategy:
             for child in child_states:
                 v = min(v, self.brs(child, a, b, depth-1, True))
                 b = min(b, v)
-                if a > b:
+                if a >= b:
                     break
             return v
 
@@ -271,9 +271,9 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     # divide by 0 error.
     avg_dist = total_dist/(1+num_friendly_pieces)
 
-    print(score)
-    print(avg_dist)
-    print(num_hostile_pieces)
+    #print(score)
+    #print(avg_dist)
+    #print(num_hostile_pieces)
 
     return -avg_dist + 10*score - num_hostile_pieces
 
@@ -288,3 +288,45 @@ def euclidian_distance(action, exit_pos):
     cube_exit = cubify(exit_pos)
     distance = (cube_action[0] - cube_exit[0])**2 + (cube_action[1] - cube_exit[1])**2 + (cube_action[2] - cube_exit[2])**2
     return distance
+
+
+def eval_state(state: State, colour : str, cost_dict) -> float:
+    total_score = 0.0
+    """enemies = []
+    team_mates = state.position_dict[colour]
+
+    #get positons of all enemies
+    for all_colour in FINISHING_HEXES.keys():
+        if all_colour != colour:
+            for position in state.position_dict[colour]:
+                enemies.append(position)
+    #safety and danger for each piece
+    for piece in state.position_dict[colour]:
+        for move in MOVE_ACTIONS:
+            neighbour = numpy.add(piece, move)
+            if is_valid_position(neighbour):
+                if (tuple(neighbour) in enemies):
+                    total_score -= 1
+                    my_jump = numpy.add(neighbour, move)
+                    enemy_jump = numpy.add(piece , [-move[0], -move[1]])
+                    if is_valid_position(my_jump):
+                        if tuple(my_jump) not in enemies and tuple(my_jump) not in team_mates:
+                            total_score += 1
+                            if is_valid_position(enemy_jump) and tuple(enemy_jump) in team_mates:
+                                total_score += 1
+                if tuple(neighbour) in team_mates:
+                    total_score += 1
+
+    
+    
+    total_score -= len(enemies)
+
+    """
+    total_dist = 0
+    for piece in state.position_dict[colour]:
+        total_dist += cost_dict[piece]
+
+    total_score -= total_dist
+    total_score += state.score_dict[colour]
+    #print(total_score)
+    return total_score

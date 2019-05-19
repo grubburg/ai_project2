@@ -11,10 +11,11 @@ BLUE_START = ((3, 0), (2, 1), (1, 2), (0, 3))
 
 class Board:
     # ================== Constants ================================== #
-    BLOCK = "blk"
     RED = "red"
     GREEN = "green"
     BLUE = "blue"
+    EMPTY = "e"
+    EXIT_STATE = [10, 10]
 
     MOVE_ACTIONS = [[0, 1], [1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1]]
 
@@ -34,20 +35,20 @@ class Board:
 
         self.colour = colour
         self.printable_board = self.create_printable_board()
-        self.path_costs = self.shortest_path_costs(self.colour)
+        self.path_costs = self.shortest_path_costs(colour)
 
 
     def create_hexagons(self):
         ran = range(-3, +3+1)
         for qr in [(q, r) for q in ran for r in ran if -q-r in ran]:
             if qr in RED_START:
-                my_hex = Hexagon(qr, "red")
+                my_hex = Hexagon(qr, self.RED)
             elif qr in GREEN_START:
-                my_hex = Hexagon(qr, "green")
+                my_hex = Hexagon(qr, self.GREEN)
             elif qr in BLUE_START:
-                my_hex = Hexagon(qr, "blue")
+                my_hex = Hexagon(qr, self.BLUE)
             else:
-                my_hex = Hexagon(qr, "e")
+                my_hex = Hexagon(qr, self.EMPTY)
     
             self.hexagon_dict[tuple(qr)] = my_hex
     
