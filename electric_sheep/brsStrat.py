@@ -23,14 +23,14 @@ class State:
     Tracks positions of all pieces, scores of all players, and the move
     that was made to arrive at the given state.
     """
-    def __init__(self, position_dict, score_dict, arrive_by_move, path_costs, colour):
+    def __init__(self, position_dict, score_dict, arrive_by_move, path_costs, colour_passed):
         self.position_dict = position_dict
         self.score_dict = score_dict
         self.arrived_by_move = arrive_by_move
         self.path_costs = path_costs
-        self.colour = colour
+        self.colour = colour_passed
         self.value = 0
-        self.value = self.simple_eval(colour)
+        self.value = self.simple_eval(colour_passed)
 
     def __lt__(self, other):
         return self.value < other.value
