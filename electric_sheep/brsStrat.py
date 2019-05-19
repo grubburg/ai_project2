@@ -50,7 +50,7 @@ class State:
         num_pieces = len(positions[colour])
         score = -avg_dist + num_pieces
 
-        return score + numpy.random.uniform(0.1, 10**(-20))
+        return score + numpy.random.uniform(0.01, 0.02)
 
     def successor_states(self, colour):
         """
@@ -306,7 +306,7 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     #print(avg_dist)
     #print(num_hostile_pieces)
 
-    return -avg_dist + score - num_hostile_pieces + numpy.random.uniform(0.1, 10**(-20))
+    return -avg_dist + score - num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
 
 
 
