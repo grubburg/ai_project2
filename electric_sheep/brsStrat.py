@@ -2,6 +2,9 @@ from electric_sheep.board import *
 from copy import deepcopy
 import numpy
 
+
+import heapq
+
 FINISHING_HEXES = {
     "red": {(3,-3), (3,-2), (3,-1), (3,0)},
     "green": {(-3,3), (-2,3), (-1,3), (0,3)},
@@ -20,10 +23,34 @@ class State:
     Tracks positions of all pieces, scores of all players, and the move
     that was made to arrive at the given state.
     """
-    def __init__(self, position_dict, score_dict, arrive_by_move):
+    def __init__(self, position_dict, score_dict, arrive_by_move, path_costs, colour):
         self.position_dict = position_dict
         self.score_dict = score_dict
         self.arrived_by_move = arrive_by_move
+        self.path_costs = path_costs
+        self.colour = colour
+        self.value = 0
+        self.value = self.simple_eval(colour)
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
+    def simple_eval(self, colour):
+
+        positions = self.position_dict
+        distances = [self.path_costs[position] for position in positions[colour]]
+        lowest_dists = heapq.nsmallest(4, distances)
+
+        if len(lowest_dists) > 0:
+            avg_dist = sum(lowest_dists)/len(lowest_dists)
+        else:
+            avg_dist = 0
+
+        num_pieces = len(positions[colour])
+        score = -avg_dist + num_pieces
+
+        return score + numpy.random.uniform(0.1, 10**(-20))
 
     def successor_states(self, colour):
         """
@@ -46,7 +73,7 @@ class State:
                 # update score information
                 new_score_dict = deepcopy(self.score_dict)
                 new_score_dict[colour] += 1
-                new_state = State(new_position_dict, new_score_dict, move)
+                new_state = State(new_position_dict, new_score_dict, move, self.path_costs, self.colour)
                 child_states.append(new_state)
 
             if move[0] == "MOVE":
@@ -55,7 +82,7 @@ class State:
                 new_position_dict[colour].remove(move[1][0])
                 new_position_dict[colour].append(move[1][1])
 
-                new_state = State(new_position_dict, self.score_dict, move)
+                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour)
                 child_states.append(new_state)
 
             if move[0] == "JUMP":
@@ -69,7 +96,7 @@ class State:
                     if middle_piece in new_position_dict[other_colour]:
                         new_position_dict[other_colour].remove(middle_piece)
                         new_position_dict[colour].append(middle_piece)
-                new_state = State(new_position_dict, self.score_dict, move)
+                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour)
                 child_states.append(new_state)
 
         return child_states
@@ -191,7 +218,7 @@ class Strategy:
             #initialise the value to negative infinity
             v = -INF
             # find all states emanating from root player's actions
-            for child in state.successor_states(self.colour):
+            for child in sorted(state.successor_states(self.colour), reverse=True):
 
                 v = max(v, self.brs(child, a, b, depth-1, False))
                 a = max(a, v)
@@ -204,7 +231,7 @@ class Strategy:
             child_states = []
             for other_colour in [c for c in ALL_COLOUR if c != self.colour]:
                 child_states += state.successor_states(other_colour)
-            for child in child_states:
+            for child in sorted(child_states, reverse=True):
                 v = min(v, self.brs(child, a, b, depth-1, True))
                 b = min(b, v)
                 if a >= b:
@@ -269,13 +296,17 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
         total_dist += cost_dict[piece]
     # calculate the approximate average distance. Add 1 to divisor for no
     # divide by 0 error.
-    avg_dist = total_dist/(1+num_friendly_pieces)
+
+    if num_friendly_pieces > 0:
+        avg_dist = total_dist/(num_friendly_pieces)
+    else:
+        avg_dist = 0
 
     #print(score)
     #print(avg_dist)
     #print(num_hostile_pieces)
 
-    return -avg_dist + 10*score - num_hostile_pieces
+    return -avg_dist + score - num_hostile_pieces + numpy.random.uniform(0.1, 10**(-20))
 
 
 
@@ -290,38 +321,38 @@ def euclidian_distance(action, exit_pos):
     return distance
 
 
-def eval_state(state: State, colour : str, cost_dict) -> float:
+def eval_state2(state: State, colour : str, cost_dict) -> float:
     total_score = 0.0
-    """enemies = []
+    enemies = []
     team_mates = state.position_dict[colour]
 
     #get positons of all enemies
-    for all_colour in FINISHING_HEXES.keys():
-        if all_colour != colour:
-            for position in state.position_dict[colour]:
-                enemies.append(position)
-    #safety and danger for each piece
-    for piece in state.position_dict[colour]:
-        for move in MOVE_ACTIONS:
-            neighbour = numpy.add(piece, move)
-            if is_valid_position(neighbour):
-                if (tuple(neighbour) in enemies):
-                    total_score -= 1
-                    my_jump = numpy.add(neighbour, move)
-                    enemy_jump = numpy.add(piece , [-move[0], -move[1]])
-                    if is_valid_position(my_jump):
-                        if tuple(my_jump) not in enemies and tuple(my_jump) not in team_mates:
-                            total_score += 1
-                            if is_valid_position(enemy_jump) and tuple(enemy_jump) in team_mates:
-                                total_score += 1
-                if tuple(neighbour) in team_mates:
-                    total_score += 1
+    # for all_colour in FINISHING_HEXES.keys():
+    #     if all_colour != colour:
+    #         for position in state.position_dict[colour]:
+    #             enemies.append(position)
+    # #safety and danger for each piece
+    # for piece in state.position_dict[colour]:
+    #     for move in MOVE_ACTIONS:
+    #         neighbour = numpy.add(piece, move)
+    #         if is_valid_position(neighbour):
+    #             if (tuple(neighbour) in enemies):
+    #                 total_score -= 1
+    #                 my_jump = numpy.add(neighbour, move)
+    #                 enemy_jump = numpy.add(piece , [-move[0], -move[1]])
+    #                 if is_valid_position(my_jump):
+    #                     if tuple(my_jump) not in enemies and tuple(my_jump) not in team_mates:
+    #                         total_score += 1
+    #                         if is_valid_position(enemy_jump) and tuple(enemy_jump) in team_mates:
+    #                             total_score += 1
+    #             if tuple(neighbour) in team_mates:
+    #                 total_score += 1
 
-    
-    
+
+
     total_score -= len(enemies)
 
-    """
+
     total_dist = 0
     for piece in state.position_dict[colour]:
         total_dist += cost_dict[piece]

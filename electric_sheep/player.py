@@ -30,7 +30,7 @@ class Player:
         # create a state object based on the current layout of the board
         # this
 
-        current_state = State(self.board.position_dict, self.board.score_dict, None)
+        current_state = State(self.board.position_dict, self.board.score_dict, None, self.board.path_costs, self.colour)
 
         strat = brsStrat(current_state, self.colour, self.board.path_costs)
         
