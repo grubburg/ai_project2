@@ -37,6 +37,8 @@ class Board:
         self.printable_board = self.create_printable_board()
         self.path_costs = self.shortest_path_costs(colour)
 
+        self.transpo_table = {}
+
 
     def create_hexagons(self):
         ran = range(-3, +3+1)

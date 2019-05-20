@@ -32,7 +32,7 @@ class Player:
 
         current_state = State(self.board.position_dict, self.board.score_dict, None, self.board.path_costs, self.colour)
 
-        strat = brsStrat(current_state, self.colour, self.board.path_costs)
+        strat = brsStrat(current_state, self.colour, self.board.path_costs, self.board.transpo_table)
         
         # retrieve the next action based on the current state
         next_action = strat.get_next_move()
