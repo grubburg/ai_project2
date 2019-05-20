@@ -63,7 +63,6 @@ class State:
 
         moves = self.get_all_moves(colour)
 
-
         for move in moves:
             # generate states resulting from exit move
             if move[0] == "EXIT":
@@ -187,7 +186,6 @@ class Strategy:
 
 
         for child in self.state.successor_states(self.colour):
-
             current_score = self.brs(child, -INF, INF, 2, False)
 
             if current_score > best_score:
@@ -269,6 +267,7 @@ class Strategy:
             # apply a move to the current state
             state.make_move(move[0], move[1])
             #
+            
             v = -self.brs_negamax(state, -b, -a, depth - 1, turn)
             # self.unmake_move(move)
             state.position_dict = current_positions
