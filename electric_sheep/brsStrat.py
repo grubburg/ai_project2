@@ -23,6 +23,12 @@ class State:
     def __lt__(self, other):
         return self.value < other.value
 
+
+    def __hash__(self):
+        state_rep = tuple(sorted([(k, tuple(sorted(v))) for k, v in self.position_dict.items()]))
+        return hash(state_rep)
+
+
     def simple_eval(self, colour):
         """
         provide a rough estimate of the 
@@ -158,10 +164,12 @@ class State:
 
 class Strategy:
 
-    def __init__(self, state, colour, cost_dict):
+    def __init__(self, state, colour, cost_dict, transpo_table):
         self.state = state
         self.colour = colour
         self.cost_dict = cost_dict
+        self.states_checked = 0
+        self.transpo_table = transpo_table
 
     def get_next_move(self):
         """
@@ -176,13 +184,19 @@ class Strategy:
 
 
         for child in self.state.successor_states(self.colour):
-            current_score = self.brs(child, -INF, INF, 2, False)
+            if child in self.transpo_table:
+                current_score = self.transpo_table[child]
 
+            else:
+                current_score = self.brs(child, -INF, INF, 3, False)
+                self.transpo_table[child] = current_score
+
+            # current_score = self.brs(child, -INF, INF, 3, False)
             if current_score > best_score:
                 best_score = current_score
                 best_move = child.arrived_by_move
 
-        
+
         #convert to JSON serializable format
         if best_move[0] == "EXIT":
             return (best_move[0], (int(best_move[1][0]), int(best_move[1][1])))
@@ -206,15 +220,23 @@ class Strategy:
 
         # note: need to include condition for terminal node.
         if depth <= 0:
+            self.states_checked += 1
             return eval_state(state, self.colour, self.cost_dict)
         # if it is the root players turn
         if turn:
             #initialise the value to negative infinity
             v = -INF
             # find all states emanating from root player's actions
-            for child in sorted(state.successor_states(self.colour), reverse=True):
+            for child in sorted(state.successor_states(self.colour), reverse=True)[:4]:
 
-                v = max(v, self.brs(child, a, b, depth-1, False))
+                if child in self.transpo_table:
+                    v = self.transpo_table[child]
+
+                else:
+                    v = max(v, self.brs(child, a, b, depth-1, False))
+                    self.transpo_table[child] = v
+
+
                 a = max(a, v)
                 if a >= b:
                     break
@@ -227,7 +249,13 @@ class Strategy:
             for other_colour in [c for c in ALL_COLOUR if c != self.colour]:
                 child_states += state.successor_states(other_colour)
             for child in sorted(child_states, reverse=True):
-                v = min(v, self.brs(child, a, b, depth-1, True))
+                if child in self.transpo_table:
+                    v = self.transpo_table[child]
+
+                else:
+                    v = min(v, self.brs(child, a, b, depth-1, True))
+                    self.transpo_table[child] = v
+
                 b = min(b, v)
                 if a >= b:
                     break
