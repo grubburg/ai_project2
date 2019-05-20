@@ -188,7 +188,7 @@ class Strategy:
                 current_score = self.transpo_table[child]
 
             else:
-                current_score = self.brs(child, -INF, INF, 3, False)
+                current_score = self.brs(child, -INF, INF, 2, False)
                 self.transpo_table[child] = current_score
 
             # current_score = self.brs(child, -INF, INF, 3, False)
@@ -282,18 +282,6 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     num_hostile_pieces = len(hostile_pieces)
 
     total_dist = 0
+    avg_dist = state.value
 
-    # count the total distance of all our pieces
-    # not considering 4 closest pieces
-    for piece in state.position_dict[colour]:
-
-        total_dist += cost_dict[piece]
-    # calculate the approximate average distance. Add 1 to divisor for no
-    # divide by 0 error.
-
-    if num_friendly_pieces > 0:
-        avg_dist = total_dist/(num_friendly_pieces)
-    else:
-        avg_dist = 0
-
-    return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
+    return avg_dist + score - num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
