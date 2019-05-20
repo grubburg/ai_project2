@@ -1,25 +1,13 @@
 from electric_sheep.board import *
 from copy import deepcopy
 import numpy
-
-
 import heapq
 
-FINISHING_HEXES = {
-    "red": {(3,-3), (3,-2), (3,-1), (3,0)},
-    "green": {(-3,3), (-2,3), (-1,3), (0,3)},
-    "blue": {(-3,0),(-2,-1),(-1,-2),(0,-3)},
-}
-
-ALL_COLOUR = ["red", "green", "blue"]
-
-VALID_TILES = [(q, r) for q in range(-3,4) for r in range(-3,4) if -q - r in range(-3,4)]
-
-INF = 100000000
 
 class State:
     """
-    Maintains a representation of the state of the game at a given stage.
+    Maintains a representation of the state of the game at a given stage in a format
+    suitable to the current Strategy
     Tracks positions of all pieces, scores of all players, and the move
     that was made to arrive at the given state.
     """
@@ -35,13 +23,17 @@ class State:
     def __lt__(self, other):
         return self.value < other.value
 
+
     def __hash__(self):
         state_rep = tuple(sorted([(k, tuple(sorted(v))) for k, v in self.position_dict.items()]))
         return hash(state_rep)
 
 
-
     def simple_eval(self, colour):
+        """
+        provide a rough estimate of the 
+        eval value of the state
+        """
 
         positions = self.position_dict
         distances = [self.path_costs[position] for position in positions[colour]]
@@ -59,102 +51,101 @@ class State:
 
     def successor_states(self, colour):
         """
-        Method to return all the states that result from a move made by the player 'colour'
+        Method to return all the states that result from a action made by the player 'colour'
         States are returned as an array of states.
         :param colour: the player moving
-        :return: array of states that result from those moves
+        :return: array of states that result from those actions
         """
         child_states = []
 
-        moves = self.get_all_moves(colour)
+        actions = self.get_all_actions(colour)
 
-        for move in moves:
+        for action in actions:
             # generate states resulting from exit move
-            if move[0] == "EXIT":
+            if action[0] == "EXIT":
                 # update position information
                 new_position_dict = deepcopy(self.position_dict)
-                new_position_dict[colour].remove(move[1])
+                new_position_dict[colour].remove(action[1])
                 # update score information
                 new_score_dict = deepcopy(self.score_dict)
                 new_score_dict[colour] += 1
-                new_state = State(new_position_dict, new_score_dict, move, self.path_costs, self.colour_passed)
+                new_state = State(new_position_dict, new_score_dict, action, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
-            if move[0] == "MOVE":
+            if action[0] == "MOVE":
                 # update position information
                 new_position_dict = deepcopy(self.position_dict)
-                new_position_dict[colour].remove(move[1][0])
-                new_position_dict[colour].append(move[1][1])
+                new_position_dict[colour].remove(action[1][0])
+                new_position_dict[colour].append(action[1][1])
 
-                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour_passed)
+                new_state = State(new_position_dict, self.score_dict, action, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
-            if move[0] == "JUMP":
+            if action[0] == "JUMP":
                 # update position information
                 new_position_dict = deepcopy(self.position_dict)
-                middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
-                new_position_dict[colour].remove(move[1][0])
-                new_position_dict[colour].append(move[1][1])
+                middle_piece = tuple(numpy.add(action[1][0], action[1][1]) / 2)
+                new_position_dict[colour].remove(action[1][0])
+                new_position_dict[colour].append(action[1][1])
 
                 for other_colour in [c for c in ALL_COLOUR if c != colour]:
                     if middle_piece in new_position_dict[other_colour]:
                         new_position_dict[other_colour].remove(middle_piece)
                         new_position_dict[colour].append(middle_piece)
-                new_state = State(new_position_dict, self.score_dict, move, self.path_costs, self.colour_passed)
+                new_state = State(new_position_dict, self.score_dict, action, self.path_costs, self.colour_passed)
                 child_states.append(new_state)
 
-            if move[0] == "PASS":
+            if action[0] == "PASS":
                 child_states.append(self)
         return child_states
 
-    def get_all_moves(self, colour):
+    def get_all_actions(self, colour):
         """
-        Method to return all moves that can be made by a given player.
-        :param colour: the player whos moves we are finding
-        :return: a list of moves that can be made by the player
+        Method to return all action that can be made by a given player.
+        :param colour: the player whos actions we are finding
+        :return: a list of action that can be made by the player
         """
-        valid_moves = []
-        if len(self.position_dict[colour]) > 0:
-            for piece in tuple(self.position_dict[colour]):
-                if piece in FINISHING_HEXES[colour]:
-                    new_move = ("EXIT", piece)
-                    valid_moves.append(new_move)
-                for move in MOVE_ACTIONS:
-                    # find new position
-                    new_pos = tuple(numpy.add(piece, move))
+        valid_actions = []
+        if (len(self.position_dict[colour]) == 0):
+            valid_actions.append(PASS)
+            return valid_actions
+        for piece in tuple(self.position_dict[colour]):
 
-                    if new_pos in VALID_TILES:
-                        # make MOVE action
+            #exit action
+            if piece in FINISHING_HEXES[colour]:
+                new_exit = ("EXIT", piece)
+                valid_actions.append(new_exit)
 
-                        all_pieces = []
-                        for c in ALL_COLOUR:
-                            all_pieces += self.position_dict[c]
+            for move in MOVE_ACTIONS:
+                # find new position
+                new_pos = tuple(numpy.add(piece, move))
 
-                        if new_pos not in all_pieces:
-                            new_move = ("MOVE", (piece, tuple(new_pos)))
-                            valid_moves.append(new_move)
+                if new_pos in VALID_TILES:
+                    all_pieces = []
+                    for c in ALL_COLOUR:
+                        all_pieces += self.position_dict[c]
 
-                        else:
-                            new_pos = tuple(numpy.add(tuple(new_pos), move))
-                            if new_pos not in all_pieces and new_pos in VALID_TILES:
-                                new_move = ("JUMP", (piece, tuple(new_pos)))
-                                valid_moves.append((new_move))
-        else:
-            # if the player has no pieces, return only the pass move
-            return [("PASS", None)]
+                    #move action
+                    if new_pos not in all_pieces:
+                        new_move = ("MOVE", (piece, tuple(new_pos)))
+                        valid_actions.append(new_move)
 
+                    else:
+                        new_pos = tuple(numpy.add(tuple(new_pos), move))
+                        if new_pos not in all_pieces and new_pos in VALID_TILES:
+                            new_jump = ("JUMP", (piece, tuple(new_pos)))
+                            valid_actions.append((new_jump))
+                                
+        return valid_actions
 
+    def make_action(self, action, colour):
 
-        return valid_moves
-
-    def make_move(self, move, colour):
-
-        if move[0] == "JUMP":
+        if action[0] == "JUMP":
             # find jumped over piece
-            middle_piece = tuple(numpy.add(move[1][0], move[1][1]) / 2)
+            middle_piece = tuple(numpy.add(action[1][0], action[1][1]) / 2)
 
-            self.position_dict[colour].remove(move[1][0])
-            self.position_dict[colour].append(move[1][1])
+            self.position_dict[colour].remove(action[1][0])
+            self.position_dict[colour].append(action[1][1])
             if middle_piece not in self.position_dict[colour]:
                 for player in [c for c in ALL_COLOUR if c != colour]:
                     if middle_piece in self.position_dict[player]:
@@ -162,13 +153,13 @@ class State:
                         self.position_dict[colour].append(middle_piece)
 
 
-        elif move[0] == "MOVE":
-            self.position_dict[colour].remove(move[1][0])
-            self.position_dict[colour].append(move[1][1])
+        elif action[0] == "MOVE":
+            self.position_dict[colour].remove(action[1][0])
+            self.position_dict[colour].append(action[1][1])
 
 
-        elif move[0] == "EXIT":
-            self.position_dict[colour].remove(move[1])
+        elif action[0] == "EXIT":
+            self.position_dict[colour].remove(action[1])
             self.score_dict[colour] += 1
 
 class Strategy:
@@ -186,7 +177,7 @@ class Strategy:
         Employs 'best reply search' defined in brs()
         """
         best_score = -INF
-        best_move = ("PASS", None)
+        best_move = PASS
 
         if len(self.state.position_dict[self.colour]) == 0:
             return best_move
@@ -205,15 +196,14 @@ class Strategy:
                 best_score = current_score
                 best_move = child.arrived_by_move
 
-        print(self.states_checked)
+
+        #convert to JSON serializable format
         if best_move[0] == "EXIT":
             return (best_move[0], (int(best_move[1][0]), int(best_move[1][1])))
 
-        elif best_move[0] == "JUMP" or best_move[0] == "MOVE":
+        else:
             return (best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
                                   (int(best_move[1][1][0]), int(best_move[1][1][1]))))
-        else:
-            return ("PASS", None)
 
 
     def brs(self, state, a, b, depth, turn):
@@ -252,6 +242,7 @@ class Strategy:
                     break
             return v
 
+        #let both enemies have their turn
         else:
             v = INF
             child_states = []
@@ -271,48 +262,15 @@ class Strategy:
             return v
 
 
-    def brs_negamax(self, state, a, b, depth, turn):
-
-        if depth <= 0:
-            return eval_state(state, self.colour, self.cost_dict)
-
-        if turn:
-            # if it is our turn, find all our moves
-            moves = state.get_all_moves(self.colour)
-            # set the next turn to NOT our turn
-            turn = False
-        else:
-            # otherwise find all possible opponent moves
-            moves = []
-            for opponent in [c for c in ALL_COLOUR if c != self.colour]:
-                moves += state.get_all_moves(opponent)
-            # set the next turn to our turn
-            turn = True
-
-        for move in moves:
-            current_positions = deepcopy(state.position_dict)
-
-            # apply a move to the current state
-            state.make_move(move[0], move[1])
-            #
-            
-            v = -self.brs_negamax(state, -b, -a, depth - 1, turn)
-            # self.unmake_move(move)
-            state.position_dict = current_positions
-            if v > b:
-                return v
-            a = max(a, v)
-
-        return a
-
-
-
 def eval_state(state: State, colour : str, cost_dict) -> float:
+
     # the score of the player's position being evaluated
     score = state.score_dict[colour]
 
+    #have reached win condition
     if score >= 4:
         return 10000
+    
     # the number of pieces we have
     num_friendly_pieces = len(state.position_dict[colour])
     hostile_pieces = []
@@ -326,6 +284,7 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     total_dist = 0
 
     # count the total distance of all our pieces
+    # not considering 4 closest pieces
     for piece in state.position_dict[colour]:
 
         total_dist += cost_dict[piece]
@@ -337,62 +296,4 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     else:
         avg_dist = 0
 
-    #print(score)
-    #print(avg_dist)
-    #print(num_hostile_pieces)
-
     return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
-
-
-
-def cubify(pos):
-    return (pos[0], pos[1], -pos[0]-pos[1])
-
-
-def euclidian_distance(action, exit_pos):
-    cube_action = cubify(action)
-    cube_exit = cubify(exit_pos)
-    distance = (cube_action[0] - cube_exit[0])**2 + (cube_action[1] - cube_exit[1])**2 + (cube_action[2] - cube_exit[2])**2
-    return distance
-
-
-def eval_state2(state: State, colour : str, cost_dict) -> float:
-    total_score = 0.0
-    enemies = []
-    team_mates = state.position_dict[colour]
-
-    # get positons of all enemies
-    for all_colour in FINISHING_HEXES.keys():
-        if all_colour != colour:
-            for position in state.position_dict[colour]:
-                enemies.append(position)
-    #safety and danger for each piece
-    for piece in state.position_dict[colour]:
-        for move in MOVE_ACTIONS:
-            neighbour = numpy.add(piece, move)
-            if is_valid_position(neighbour):
-                if (tuple(neighbour) in enemies):
-                    total_score -= 1
-                    my_jump = numpy.add(neighbour, move)
-                    enemy_jump = numpy.add(piece , [-move[0], -move[1]])
-                    if is_valid_position(my_jump):
-                        if tuple(my_jump) not in enemies and tuple(my_jump) not in team_mates:
-                            total_score += 1
-                            if is_valid_position(enemy_jump) and tuple(enemy_jump) in team_mates:
-                                total_score += 1
-                if tuple(neighbour) in team_mates:
-                    total_score += 1
-
-
-
-    total_score -= len(enemies)
-
-
-    total_dist = 0
-    for piece in state.position_dict[colour]:
-        total_dist += cost_dict[piece]
-
-    total_score -= total_dist
-    total_score += state.score_dict[colour]
-    #print(total_score)
-    return total_score

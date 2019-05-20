@@ -1,30 +1,19 @@
 from electric_sheep.hexagon import *
+from electric_sheep.data import *
 import heapq
-
-
-RED_START = ((-3,3), (-3,2), (-3,1), (-3,0))
-GREEN_START = ((0,-3), (1,-3), (2,-3), (3,-3))
-BLUE_START = ((3, 0), (2, 1), (1, 2), (0, 3))
-
 
 
 
 class Board:
-    # ================== Constants ================================== #
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-    EMPTY = "e"
-    EXIT_STATE = [10, 10]
+    """
+    Default board representation of the current game
+    hexgon dict holds a representation of the whole board
+    position dict holds location of pieces for each colour
+    score_dict counts the number of pieces exited by each colour
+    path_cost stores the number of moves required to reach exit 
+    for specified colour
 
-    MOVE_ACTIONS = [[0, 1], [1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1]]
-
-    # exit position for each player
-    FINAL_ROWS = {RED: [[3, -3], [3, -2], [3, -1], [3, 0]],
-                  GREEN: [[-3, 3], [-2, 3], [-1, 3], [0, 3]],
-                  BLUE: [[-3, 0], [-2, -1], [-1, -2], [0, -3]]}
-
-    # =============================================================== #
+    """
     def __init__(self, colour):
         self.hexagon_dict = {}
         self.position_dict = {}
@@ -33,29 +22,34 @@ class Board:
         self.create_positions()
         self.create_scores()
 
-        self.colour = colour
-        self.printable_board = self.create_printable_board()
         self.path_costs = self.shortest_path_costs(colour)
 
         self.transpo_table = {}
 
 
     def create_hexagons(self):
-        ran = range(-3, +3+1)
-        for qr in [(q, r) for q in ran for r in ran if -q-r in ran]:
+        """
+        Fills up the hexagon dict with the starting state 
+        of the game
+        """
+        for qr in VALID_TILES:
             if qr in RED_START:
-                my_hex = Hexagon(qr, self.RED)
+                my_hex = Hexagon(qr, 'red')
             elif qr in GREEN_START:
-                my_hex = Hexagon(qr, self.GREEN)
+                my_hex = Hexagon(qr, 'green')
             elif qr in BLUE_START:
-                my_hex = Hexagon(qr, self.BLUE)
+                my_hex = Hexagon(qr, 'blue')
             else:
-                my_hex = Hexagon(qr, self.EMPTY)
+                my_hex = Hexagon(qr, EMPTY)
     
             self.hexagon_dict[tuple(qr)] = my_hex
     
     # create a dictionary of positions for each colour
     def create_positions(self):
+        """
+        initializes the positon dict with the starting
+        positons of the game
+        """
         red = list(RED_START)
         green = list(GREEN_START)
         blue = list(BLUE_START)
@@ -69,25 +63,6 @@ class Board:
         self.score_dict['green'] = 0
         self.score_dict['blue'] = 0
 
-    def is_valid_position(self, positon):
-        if tuple(positon) in self.hexagon_dict:
-            return True
-        else:
-            return False
-
-    def create_printable_board(self):
-        """
-        creates the map of the board
-        add each legal position of the board into a dictionary
-        """
-        out_board = {}
-        ran = range(-3, +3 + 1)
-
-        for qr in [(q, r) for q in ran for r in ran if -q - r in ran]:
-            out_board[qr] = ""
-
-        return out_board
-
     def shortest_path_costs(self, colour):
         """
         uses dijkstra's to find the shortest path from the any final row to all other positions
@@ -99,7 +74,7 @@ class Board:
         queue = []
 
         # add all final pieces to queue with cost 1
-        for tile in self.FINAL_ROWS[colour]:
+        for tile in FINISHING_HEXES[colour]:
 
             # a 3 point vector added to resolve same cost position sorting in heap
             queue.append([1, entry_point, tuple(tile)])
@@ -134,8 +109,8 @@ class Board:
 
         all_tiles = []
 
-        for move in self.MOVE_ACTIONS:
+        for move in MOVE_ACTIONS:
             new_tile = [a + b for a, b in zip(tile, move)]
             all_tiles.append(new_tile)
 
-        return [x for x in all_tiles if tuple(x) in self.printable_board]
+        return [x for x in all_tiles if tuple(x) in VALID_TILES]
