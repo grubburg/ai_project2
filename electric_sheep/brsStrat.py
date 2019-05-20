@@ -234,43 +234,6 @@ class Strategy:
             return v
 
 
-    # not in use (to_remove)
-    def brs_negamax(self, state, a, b, depth, turn):
-
-        if depth <= 0:
-            return eval_state(state, self.colour, self.cost_dict)
-
-        if turn:
-            # if it is our turn, find all our moves
-            moves = state.get_all_moves(self.colour)
-            # set the next turn to NOT our turn
-            turn = False
-        else:
-            # otherwise find all possible opponent moves
-            moves = []
-            for opponent in [c for c in ALL_COLOUR if c != self.colour]:
-                moves += state.get_all_moves(opponent)
-            # set the next turn to our turn
-            turn = True
-
-        for move in moves:
-            current_positions = deepcopy(state.position_dict)
-
-            # apply a move to the current state
-            state.make_move(move[0], move[1])
-            #
-            
-            v = -self.brs_negamax(state, -b, -a, depth - 1, turn)
-            # self.unmake_move(move)
-            state.position_dict = current_positions
-            if v > b:
-                return v
-            a = max(a, v)
-
-        return a
-
-
-
 def eval_state(state: State, colour : str, cost_dict) -> float:
 
     # the score of the player's position being evaluated
@@ -306,56 +269,3 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
         avg_dist = 0
 
     return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
-
-
-#(to_remove)
-def cubify(pos):
-    return (pos[0], pos[1], -pos[0]-pos[1])
-
-#(to_remove)
-def euclidian_distance(action, exit_pos):
-    cube_action = cubify(action)
-    cube_exit = cubify(exit_pos)
-    distance = (cube_action[0] - cube_exit[0])**2 + (cube_action[1] - cube_exit[1])**2 + (cube_action[2] - cube_exit[2])**2
-    return distance
-
-#(to_remove)
-def eval_state2(state: State, colour : str, cost_dict) -> float:
-    total_score = 0.0
-    enemies = []
-    team_mates = state.position_dict[colour]
-
-    # get positons of all enemies
-    for all_colour in FINISHING_HEXES.keys():
-        if all_colour != colour:
-            for position in state.position_dict[colour]:
-                enemies.append(position)
-    #safety and danger for each piece
-    for piece in state.position_dict[colour]:
-        for move in MOVE_ACTIONS:
-            neighbour = numpy.add(piece, move)
-            if is_valid_position(neighbour):
-                if (tuple(neighbour) in enemies):
-                    total_score -= 1
-                    my_jump = numpy.add(neighbour, move)
-                    enemy_jump = numpy.add(piece , [-move[0], -move[1]])
-                    if is_valid_position(my_jump):
-                        if tuple(my_jump) not in enemies and tuple(my_jump) not in team_mates:
-                            total_score += 1
-                            if is_valid_position(enemy_jump) and tuple(enemy_jump) in team_mates:
-                                total_score += 1
-                if tuple(neighbour) in team_mates:
-                    total_score += 1
-
-
-
-    total_score -= len(enemies)
-
-
-    total_dist = 0
-    for piece in state.position_dict[colour]:
-        total_dist += cost_dict[piece]
-
-    total_score -= total_dist
-    total_score += state.score_dict[colour]
-    return total_score
