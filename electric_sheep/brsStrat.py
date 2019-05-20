@@ -48,7 +48,7 @@ class State:
             avg_dist = 0
 
         num_pieces = len(positions[colour])
-        score = -avg_dist + num_pieces
+        score = -avg_dist + (num_pieces + self.score_dict[colour])
 
         return score + numpy.random.uniform(0.01, 0.02)
 
@@ -181,7 +181,6 @@ class Strategy:
         """
         best_score = -INF
         best_move = ("PASS", None)
-        search_depth = 11 // len(self.state.position_dict[self.colour])
 
         if len(self.state.position_dict[self.colour]) == 0:
             return best_move
@@ -189,7 +188,7 @@ class Strategy:
 
         for child in self.state.successor_states(self.colour):
 
-            current_score = self.brs(child, -INF, INF, search_depth, False)
+            current_score = self.brs(child, -INF, INF, 2, False)
 
             if current_score > best_score:
                 best_score = current_score
@@ -285,6 +284,8 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     # the score of the player's position being evaluated
     score = state.score_dict[colour]
 
+    if score >= 4:
+        return 10000
     # the number of pieces we have
     num_friendly_pieces = len(state.position_dict[colour])
     hostile_pieces = []
