@@ -3,7 +3,6 @@ from electric_sheep.data import *
 import heapq
 
 
-
 class Board:
     """
     Default board representation of the current game
@@ -21,11 +20,8 @@ class Board:
         self.create_hexagons()
         self.create_positions()
         self.create_scores()
-
         self.path_costs = self.shortest_path_costs(colour)
-
         self.transpo_table = {}
-
 
     def create_hexagons(self):
         """
@@ -47,8 +43,8 @@ class Board:
     # create a dictionary of positions for each colour
     def create_positions(self):
         """
-        initializes the positon dict with the starting
-        positons of the game
+        initializes the position dict with the starting
+        positions of the game
         """
         red = list(RED_START)
         green = list(GREEN_START)

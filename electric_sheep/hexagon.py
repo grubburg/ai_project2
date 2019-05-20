@@ -5,10 +5,9 @@ class Hexagon:
     def __init__(self, position, occupant):
         self.positon = tuple(position)
         self.occupant = occupant
-        self.neighbours = self.create_neightbours()
+        self.neighbours = self.create_neighbours()
 
-
-    def create_neightbours(self):
+    def create_neighbours(self):
         neighbour_list = []
         for move in MOVE_ACTIONS:
             new_tile = numpy.add(self.positon, move)

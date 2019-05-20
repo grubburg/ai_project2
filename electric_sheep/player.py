@@ -17,9 +17,6 @@ class Player:
         self.colour = colour
         self.board = Board(colour)
 
-
-
-
     def action(self):
         """
         get best next move according to the strategy
@@ -40,13 +37,13 @@ class Player:
         the moves from referee
         """
 
-        #jump action update
+        # jump action update
         if action[0] == "JUMP":
 
-            #find jumped over piece
+            # find jumped over piece
             middle_piece = tuple(numpy.add(action[1][0], action[1][1]) // 2)
 
-            #if a piece was captured
+            # if a piece was captured
             if self.board.hexagon_dict[middle_piece].occupant != colour:
                 cap_colour = self.board.hexagon_dict[middle_piece].occupant
                 self.board.position_dict[cap_colour].remove(middle_piece)
@@ -61,8 +58,6 @@ class Player:
 
         elif action[0] == "EXIT":
             self.exit_piece(action, colour)
-
-
 
     def move_pieces(self, action, colour):
         """

@@ -23,11 +23,9 @@ class State:
     def __lt__(self, other):
         return self.value < other.value
 
-
     def __hash__(self):
         state_rep = tuple(sorted([(k, tuple(sorted(v))) for k, v in self.position_dict.items()]))
         return hash(state_rep)
-
 
     def simple_eval(self, colour):
         """
@@ -106,12 +104,12 @@ class State:
         :return: a list of action that can be made by the player
         """
         valid_actions = []
-        if (len(self.position_dict[colour]) == 0):
+        if len(self.position_dict[colour]) == 0:
             valid_actions.append(PASS)
             return valid_actions
         for piece in tuple(self.position_dict[colour]):
 
-            #exit action
+            # exit action
             if piece in FINISHING_HEXES[colour]:
                 new_exit = ("EXIT", piece)
                 valid_actions.append(new_exit)
@@ -125,7 +123,7 @@ class State:
                     for c in ALL_COLOUR:
                         all_pieces += self.position_dict[c]
 
-                    #move action
+                    # move action
                     if new_pos not in all_pieces:
                         new_move = ("MOVE", (piece, tuple(new_pos)))
                         valid_actions.append(new_move)
@@ -134,7 +132,7 @@ class State:
                         new_pos = tuple(numpy.add(tuple(new_pos), move))
                         if new_pos not in all_pieces and new_pos in VALID_TILES:
                             new_jump = ("JUMP", (piece, tuple(new_pos)))
-                            valid_actions.append((new_jump))
+                            valid_actions.append(new_jump)
                                 
         return valid_actions
 
@@ -152,15 +150,14 @@ class State:
                         self.position_dict[player].remove(middle_piece)
                         self.position_dict[colour].append(middle_piece)
 
-
         elif action[0] == "MOVE":
             self.position_dict[colour].remove(action[1][0])
             self.position_dict[colour].append(action[1][1])
 
-
         elif action[0] == "EXIT":
             self.position_dict[colour].remove(action[1])
             self.score_dict[colour] += 1
+
 
 class Strategy:
 
@@ -182,7 +179,6 @@ class Strategy:
         if len(self.state.position_dict[self.colour]) == 0:
             return best_move
 
-
         for child in self.state.successor_states(self.colour):
             if child in self.transpo_table:
                 current_score = self.transpo_table[child]
@@ -196,15 +192,13 @@ class Strategy:
                 best_score = current_score
                 best_move = child.arrived_by_move
 
-
-        #convert to JSON serializable format
+        # convert to JSON serializable format
         if best_move[0] == "EXIT":
-            return (best_move[0], (int(best_move[1][0]), int(best_move[1][1])))
+            return best_move[0], (int(best_move[1][0]), int(best_move[1][1]))
 
         else:
-            return (best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
-                                  (int(best_move[1][1][0]), int(best_move[1][1][1]))))
-
+            return best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
+                                  (int(best_move[1][1][0]), int(best_move[1][1][1])))
 
     def brs(self, state, a, b, depth, turn):
         """
@@ -224,7 +218,7 @@ class Strategy:
             return eval_state(state, self.colour, self.cost_dict)
         # if it is the root players turn
         if turn:
-            #initialise the value to negative infinity
+            # initialise the value to negative infinity
             v = -INF
             # find all states emanating from root player's actions
             for child in sorted(state.successor_states(self.colour), reverse=True)[:4]:
@@ -236,13 +230,12 @@ class Strategy:
                     v = max(v, self.brs(child, a, b, depth-1, False))
                     self.transpo_table[child] = v
 
-
                 a = max(a, v)
                 if a >= b:
                     break
             return v
 
-        #let both enemies have their turn
+        # let both enemies have their turn
         else:
             v = INF
             child_states = []
@@ -267,7 +260,7 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     # the score of the player's position being evaluated
     score = state.score_dict[colour]
 
-    #have reached win condition
+    # have reached win condition
     if score >= 4:
         return 10000
     
