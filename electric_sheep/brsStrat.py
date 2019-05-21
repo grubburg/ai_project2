@@ -170,30 +170,15 @@ class State:
                                 
         return valid_actions
 
-    def make_action(self, action, colour):
 
-        if action[0] == "JUMP":
-            # find jumped over piece
-            middle_piece = tuple(numpy.add(action[1][0], action[1][1]) / 2)
 
-            self.position_dict[colour].remove(action[1][0])
-            self.position_dict[colour].append(action[1][1])
-            if middle_piece not in self.position_dict[colour]:
-                for player in [c for c in ALL_COLOUR if c != colour]:
-                    if middle_piece in self.position_dict[player]:
-                        self.position_dict[player].remove(middle_piece)
-                        self.position_dict[colour].append(middle_piece)
-
-        elif action[0] == "MOVE":
-            self.position_dict[colour].remove(action[1][0])
-            self.position_dict[colour].append(action[1][1])
-
-        elif action[0] == "EXIT":
-            self.position_dict[colour].remove(action[1])
-            self.score_dict[colour] += 1
 
 
 class Strategy:
+    """
+    Wrapper class for the player to interact with 
+    to get the next best move
+    """
 
     def __init__(self, state, colour, cost_dict, transpo_table):
         self.state = state
@@ -235,6 +220,7 @@ class Strategy:
         else:
             return best_move[0], ((int(best_move[1][0][0]), int(best_move[1][0][1])),
                                   (int(best_move[1][1][0]), int(best_move[1][1][1])))
+
 
     def brs(self, state, a, b, depth, turn):
         """
@@ -293,6 +279,10 @@ class Strategy:
 
 def eval_state(state: State, colour : str, cost_dict) -> float:
 
+    """
+    evaluate a state and return its score
+    """
+
     # the score of the player's position being evaluated
     score = state.score_dict[colour]
 
@@ -325,4 +315,4 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     if (len(state.position_dict[colour]) + score < 2):
         return -num_hostile_pieces
 
-    return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
+    return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
