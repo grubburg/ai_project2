@@ -261,8 +261,10 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     score = state.score_dict[colour]
 
     # have reached win condition
-    if score >= 4:
-        return 10000
+    exit_pos = len([x for x in state.position_dict[colour] if x in FINISHING_HEXES[colour]])
+    if (exit_pos + score >= 4):
+        return state.value + (1000*score)
+
     
     # the number of pieces we have
     num_friendly_pieces = len(state.position_dict[colour])
@@ -277,4 +279,8 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     total_dist = 0
     avg_dist = state.value
 
-    return avg_dist + score - num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
+    #hail mary condition
+    if (len(state.position_dict[colour]) + score < 2):
+        return -num_hostile_pieces
+
+    return avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
