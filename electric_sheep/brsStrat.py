@@ -75,8 +75,8 @@ class State:
             avg_dist = 0
 
         # hail mary condition
-        if (len(self.position_dict[colour]) + score < 2):
-            return -num_hostile_pieces
+        if (len(self.position_dict[colour]) == 1 and avg_dist > 2):
+            return -num_hostile_pieces * 100
 
         return -avg_dist + 5 * score - 10 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
 
@@ -229,6 +229,7 @@ class Strategy:
                     best_move = child.arrived_by_move
 
         # convert to JSON serializable format
+        print(self.states_checked)
         if best_move[0] == "EXIT":
             return best_move[0], (int(best_move[1][0]), int(best_move[1][1]))
 
