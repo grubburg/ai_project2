@@ -1,7 +1,6 @@
 from electric_sheep.board import *
 from copy import deepcopy
 import numpy
-import heapq
 
 
 class State:
@@ -18,7 +17,7 @@ class State:
         self.path_costs = path_costs
         self.colour_passed = colour_passed
         self.value = 0
-        self.value = self.simple_eval(colour_passed)
+        self.value = self.eval(colour_passed)
 
     def __lt__(self, other):
         return self.value < other.value
@@ -27,32 +26,17 @@ class State:
         state_rep = tuple(sorted([(k, tuple(sorted(v))) for k, v in self.position_dict.items()]))
         return hash(state_rep)
 
-    def simple_eval(self, colour):
+    def eval(self, colour):
         """
-        provide a rough estimate of the 
-        eval value of the state
+        evaluate a state and return its score
         """
-
-        # positions = self.position_dict
-        # distances = [self.path_costs[position] for position in positions[colour]]
-        # lowest_dists = heapq.nsmallest(4, distances)
-        #
-        # if len(lowest_dists) > 0:
-        #     avg_dist = sum(lowest_dists)/len(lowest_dists)
-        # else:
-        #     avg_dist = 0
-        #
-        # num_pieces = len(positions[colour])
-        # score = -avg_dist + (num_pieces + self.score_dict[colour])
-        #
-        # return score + numpy.random.uniform(0.01, 0.02)
 
         # the score of the player's position being evaluated
         score = self.score_dict[colour]
 
         # have reached win condition
         exit_pos = len([x for x in self.position_dict[colour] if x in FINISHING_HEXES[colour]])
-        if (exit_pos + score >= 4):
+        if exit_pos + score >= 4:
             return self.value + (1000 * score)
 
         # the number of pieces we have
@@ -72,14 +56,12 @@ class State:
 
             avg_dist = total_dist / num_friendly_pieces
         else:
-            avg_dist = 0
+            avg_dist = -INF
 
         # hail mary condition
-        if (len(self.position_dict[colour]) == 1 and avg_dist > 2):
-            return -num_hostile_pieces * 100
-
-        return -avg_dist + 5 * score - 20 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
-
+        if len(self.position_dict[colour]) == 0 and score != 4:
+            return -INF
+        return -avg_dist + 5 * score - 10 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
 
     def successor_states(self, colour):
         """
@@ -237,7 +219,7 @@ class Strategy:
         # note: need to include condition for terminal node.
         if depth <= 0:
             self.states_checked += 1
-            return state.simple_eval(self.colour)
+            return state.value
         # if it is the root players turn
         if turn:
             # initialise the value to negative infinity
@@ -275,43 +257,3 @@ class Strategy:
                 if a >= b:
                     break
             return v
-
-
-def eval_state(state: State, colour : str, cost_dict) -> float:
-
-    """
-    evaluate a state and return its score
-    """
-
-    # the score of the player's position being evaluated
-    score = state.score_dict[colour]
-
-    # have reached win condition
-    exit_pos = len([x for x in state.position_dict[colour] if x in FINISHING_HEXES[colour]])
-    if (exit_pos + score >= 4):
-        return state.value + (1000*score)
-
-    
-    # the number of pieces we have
-    num_friendly_pieces = len(state.position_dict[colour])
-    hostile_pieces = []
-    # build an array of the opponents pieces
-    for other_colour in [c for c in ALL_COLOUR if c != colour]:
-        hostile_pieces += state.position_dict[other_colour]
-
-    # count the opponents pieces
-    num_hostile_pieces = len(hostile_pieces)
-
-    total_dist = 0
-    for piece in state.position_dict[colour]:
-        total_dist += cost_dict[piece]
-    if num_friendly_pieces > 0:
-
-        avg_dist = total_dist/num_friendly_pieces
-    else:
-        avg_dist = -INF
-
-    #hail mary condition
-    if (len(state.position_dict[colour]) == 0 and score != 4):
-        return -INF
-    return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
