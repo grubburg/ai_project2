@@ -232,7 +232,8 @@ class Strategy:
 
                 else:
                     v = max(v, self.brs(child, a, b, depth-1, False))
-                    self.transpo_table[child] = v
+                    if depth == 3:
+                        self.transpo_table[child] = v
 
                 a = max(a, v)
                 if a >= b:
@@ -251,7 +252,8 @@ class Strategy:
 
                 else:
                     v = min(v, self.brs(child, a, b, depth-1, True))
-                    self.transpo_table[child] = v
+                    if depth == 3:
+                        self.transpo_table[child] = v
 
                 b = min(b, v)
                 if a >= b:
