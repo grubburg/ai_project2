@@ -78,7 +78,7 @@ class State:
         if (len(self.position_dict[colour]) == 1 and avg_dist > 2):
             return -num_hostile_pieces * 100
 
-        return -avg_dist + 5 * score - 10 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
+        return -avg_dist + 5 * score - 20 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
 
 
     def successor_states(self, colour):
