@@ -10,6 +10,7 @@ class State:
     Tracks positions of all pieces, scores of all players, and the move
     that was made to arrive at the given state.
     """
+
     def __init__(self, position_dict, score_dict, arrive_by_move, path_costs, colour_passed):
         self.position_dict = position_dict
         self.score_dict = score_dict
@@ -25,6 +26,7 @@ class State:
     def __hash__(self):
         state_rep = tuple(sorted([(k, tuple(sorted(v))) for k, v in self.position_dict.items()]))
         return hash(state_rep)
+
 
     def eval(self, colour):
         """
@@ -58,10 +60,11 @@ class State:
         else:
             avg_dist = -INF
 
-        # hail mary condition
+        # hail mary condition, only one piece left
         if len(self.position_dict[colour]) == 0 and score != 4:
             return -INF
         return -avg_dist + 5 * score - 10 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
+
 
     def successor_states(self, colour):
         """
@@ -113,6 +116,7 @@ class State:
                 child_states.append(self)
         return child_states
 
+
     def get_all_actions(self, colour):
         """
         Method to return all action that can be made by a given player.
@@ -155,7 +159,6 @@ class State:
 
 
 
-
 class Strategy:
     """
     Wrapper class for the player to interact with 
@@ -168,6 +171,7 @@ class Strategy:
         self.cost_dict = cost_dict
         self.states_checked = 0
         self.transpo_table = transpo_table
+
 
     def get_next_move(self):
         """
