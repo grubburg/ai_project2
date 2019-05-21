@@ -33,19 +33,53 @@ class State:
         eval value of the state
         """
 
-        positions = self.position_dict
-        distances = [self.path_costs[position] for position in positions[colour]]
-        lowest_dists = heapq.nsmallest(4, distances)
+        # positions = self.position_dict
+        # distances = [self.path_costs[position] for position in positions[colour]]
+        # lowest_dists = heapq.nsmallest(4, distances)
+        #
+        # if len(lowest_dists) > 0:
+        #     avg_dist = sum(lowest_dists)/len(lowest_dists)
+        # else:
+        #     avg_dist = 0
+        #
+        # num_pieces = len(positions[colour])
+        # score = -avg_dist + (num_pieces + self.score_dict[colour])
+        #
+        # return score + numpy.random.uniform(0.01, 0.02)
 
-        if len(lowest_dists) > 0:
-            avg_dist = sum(lowest_dists)/len(lowest_dists)
+        # the score of the player's position being evaluated
+        score = self.score_dict[colour]
+
+        # have reached win condition
+        exit_pos = len([x for x in self.position_dict[colour] if x in FINISHING_HEXES[colour]])
+        if (exit_pos + score >= 4):
+            return self.value + (1000 * score)
+
+        # the number of pieces we have
+        num_friendly_pieces = len(self.position_dict[colour])
+        hostile_pieces = []
+        # build an array of the opponents pieces
+        for other_colour in [c for c in ALL_COLOUR if c != colour]:
+            hostile_pieces += self.position_dict[other_colour]
+
+        # count the opponents pieces
+        num_hostile_pieces = len(hostile_pieces)
+
+        total_dist = 0
+        for piece in self.position_dict[colour]:
+            total_dist += self.path_costs[piece]
+        if num_friendly_pieces > 0:
+
+            avg_dist = total_dist / num_friendly_pieces
         else:
             avg_dist = 0
 
-        num_pieces = len(positions[colour])
-        score = -avg_dist + (num_pieces + self.score_dict[colour])
+        # hail mary condition
+        if (len(self.position_dict[colour]) + score < 2):
+            return -num_hostile_pieces
 
-        return score + numpy.random.uniform(0.01, 0.02)
+        return -avg_dist + 5 * score - 10 * num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
+
 
     def successor_states(self, colour):
         """
@@ -179,18 +213,20 @@ class Strategy:
         if len(self.state.position_dict[self.colour]) == 0:
             return best_move
 
-        for child in self.state.successor_states(self.colour):
-            if child in self.transpo_table:
-                current_score = self.transpo_table[child]
 
-            else:
-                current_score = self.brs(child, -INF, INF, 2, False)
-                self.transpo_table[child] = current_score
+        for i in range(3):
+            for child in self.state.successor_states(self.colour):
+                if child in self.transpo_table:
+                    current_score = self.transpo_table[child]
 
-            # current_score = self.brs(child, -INF, INF, 3, False)
-            if current_score > best_score:
-                best_score = current_score
-                best_move = child.arrived_by_move
+                else:
+                    current_score = self.brs(child, -INF, INF, i, False)
+                    self.transpo_table[child] = current_score
+
+                # current_score = self.brs(child, -INF, INF, 3, False)
+                if current_score > best_score:
+                    best_score = current_score
+                    best_move = child.arrived_by_move
 
         # convert to JSON serializable format
         if best_move[0] == "EXIT":
@@ -215,13 +251,13 @@ class Strategy:
         # note: need to include condition for terminal node.
         if depth <= 0:
             self.states_checked += 1
-            return eval_state(state, self.colour, self.cost_dict)
+            return state.simple_eval(self.colour)
         # if it is the root players turn
         if turn:
             # initialise the value to negative infinity
             v = -INF
             # find all states emanating from root player's actions
-            for child in sorted(state.successor_states(self.colour), reverse=True)[:4]:
+            for child in sorted(state.successor_states(self.colour), reverse=True):
 
                 if child in self.transpo_table:
                     v = self.transpo_table[child]
@@ -241,7 +277,7 @@ class Strategy:
             child_states = []
             for other_colour in [c for c in ALL_COLOUR if c != self.colour]:
                 child_states += state.successor_states(other_colour)
-            for child in sorted(child_states, reverse=True):
+            for child in sorted(child_states, reverse=False):
                 if child in self.transpo_table:
                     v = self.transpo_table[child]
 
@@ -277,10 +313,16 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
     num_hostile_pieces = len(hostile_pieces)
 
     total_dist = 0
-    avg_dist = state.value
+    for piece in state.position_dict[colour]:
+        total_dist += cost_dict[piece]
+    if num_friendly_pieces > 0:
+
+        avg_dist = total_dist/num_friendly_pieces
+    else:
+        avg_dist = 0
 
     #hail mary condition
     if (len(state.position_dict[colour]) + score < 2):
         return -num_hostile_pieces
 
-    return avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
+    return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02) + exit_pos
