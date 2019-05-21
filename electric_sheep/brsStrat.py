@@ -229,7 +229,6 @@ class Strategy:
                     best_move = child.arrived_by_move
 
         # convert to JSON serializable format
-        print(self.states_checked)
         if best_move[0] == "EXIT":
             return best_move[0], (int(best_move[1][0]), int(best_move[1][1]))
 
