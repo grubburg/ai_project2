@@ -309,10 +309,9 @@ def eval_state(state: State, colour : str, cost_dict) -> float:
 
         avg_dist = total_dist/num_friendly_pieces
     else:
-        avg_dist = 0
+        avg_dist = -INF
 
     #hail mary condition
-    if (len(state.position_dict[colour]) + score < 2):
-        return -num_hostile_pieces
-
+    if (len(state.position_dict[colour]) == 0 and score != 4):
+        return -INF
     return -avg_dist + 5*score - 10*num_hostile_pieces + numpy.random.uniform(0.01, 0.02)
